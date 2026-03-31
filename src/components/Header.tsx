@@ -4,9 +4,15 @@ import { ThemeToggle } from './ThemeToggle';
 import { TrashIcon } from './icons';
 
 export function Header() {
-  const clearStorage = () => {
+  const clearStorage = async () => {
     if (window.confirm('Clear all data? This cannot be undone.')) {
       localStorage.clear();
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      const regs = await navigator.serviceWorker?.getRegistrations();
+      if (regs) await Promise.all(regs.map(r => r.unregister()));
       window.location.reload();
     }
   };
