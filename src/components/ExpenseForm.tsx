@@ -38,7 +38,7 @@ export function ExpenseForm() {
     if (splitType === 'manual' && manualMap) {
       const total = Object.values(manualMap).reduce((a, b) => a + b, 0);
       if (Math.abs(total - amt) > 0.01) {
-        setError(`Manual amounts total ${total.toFixed(2)} but expense is ${amt.toFixed(2)}. They must match.`);
+        setError(`Manual amounts total $${total.toFixed(2)} but expense is $${amt.toFixed(2)}. They must match.`);
         return;
       }
     }

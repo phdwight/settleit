@@ -10,7 +10,7 @@ export class EqualSplitStrategy implements SplitStrategy {
       userId: id,
       amount: perPerson,
     }));
-    // Handle rounding: assign remainder to first participant
+    // Handle rounding: assign remainder to first participant (deterministic, stable ordering)
     const sum = splits.reduce((acc, s) => acc + s.amount, 0);
     const diff = Math.round((totalAmount - sum) * 100) / 100;
     if (diff !== 0) splits[0].amount = Math.round((splits[0].amount + diff) * 100) / 100;
