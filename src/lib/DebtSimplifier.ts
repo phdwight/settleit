@@ -2,13 +2,21 @@ import type { Expense, Debt, User } from './types';
 
 export class DebtSimplifier {
   simplify(expenses: Expense[], participants: User[]): Debt[] {
+    if (!participants?.length || !expenses?.length) return [];
     // Compute net balance for each user (positive = owed money, negative = owes money)
     const balance: Record<string, number> = {};
     participants.forEach(p => { balance[p.id] = 0; });
 
     expenses.forEach(expense => {
-      // The payer is owed back their share from others
-      balance[expense.paidBy] = (balance[expense.paidBy] ?? 0) + expense.amount;
+      // Each payer is owed back their contribution
+      if (Array.isArray(expense.paidBy)) {
+        expense.paidBy.forEach(payer => {
+          balance[payer.userId] = (balance[payer.userId] ?? 0) + payer.amount;
+        });
+      } else {
+        // Legacy single-payer format
+        balance[expense.paidBy as string] = (balance[expense.paidBy as string] ?? 0) + expense.amount;
+      }
       expense.splits.forEach(split => {
         balance[split.userId] = (balance[split.userId] ?? 0) - split.amount;
       });

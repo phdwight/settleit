@@ -10,13 +10,19 @@ export interface SplitDetail {
 
 export type SplitType = 'equal' | 'manual';
 
+export interface PayerDetail {
+  userId: string;
+  amount: number;
+}
+
 export interface Expense {
   id: string;
   description: string;
   amount: number;
-  paidBy: string; // userId
+  paidBy: PayerDetail[]; // one or more payers
   splitType: SplitType;
   splits: SplitDetail[]; // computed splits
+  receiptImage?: string; // base64 data URL (downscaled)
   createdAt: number;
 }
 
@@ -26,7 +32,21 @@ export interface Debt {
   amount: number;
 }
 
+export interface Event {
+  id: string;
+  name: string;
+  createdAt: number;
+  participants: User[];
+  expenses: Expense[];
+}
+
 export interface AppState {
+  events: Event[];
+  activeEventId: string | null;
+}
+
+/** Convenience projection of the active event's data */
+export interface EventData {
   participants: User[];
   expenses: Expense[];
 }

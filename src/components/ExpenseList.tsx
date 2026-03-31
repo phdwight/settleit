@@ -1,12 +1,21 @@
 'use client';
 
+import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { TrashIcon } from '@/components/icons';
 
 export function ExpenseList() {
   const { expenses, participants, removeExpense } = useApp();
+  const [viewingReceipt, setViewingReceipt] = useState<string | null>(null);
 
   const getName = (id: string) => participants.find(p => p.id === id)?.name ?? 'Unknown';
+
+  const getPaidByLabel = (paidBy: unknown) => {
+    if (Array.isArray(paidBy)) {
+      return paidBy.map(p => `${getName(p.userId)}: ${p.amount.toFixed(2)}`).join(' · ');
+    }
+    return getName(paidBy as string);
+  };
 
   if (expenses.length === 0) {
     return (
@@ -28,29 +37,40 @@ export function ExpenseList() {
           <li key={expense.id} className="expense-item">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">{expense.description}</p>
-                <p className="text-sm text-[var(--muted)]">
-                  Paid by <strong>{getName(expense.paidBy)}</strong> · {expense.splitType === 'equal' ? 'Equal split' : 'Manual split'}
+                <p className="text-sm font-semibold truncate">{expense.description}</p>
+                <p className="text-xs text-[var(--muted)]">
+                  Paid by <strong>{getPaidByLabel(expense.paidBy)}</strong> · {expense.splitType === 'equal' ? 'Equal' : 'Manual'}
                 </p>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="amount-display">${expense.amount.toFixed(2)}</span>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span className="amount-display">{expense.amount.toFixed(2)}</span>
                 <button onClick={() => removeExpense(expense.id)} className="icon-btn text-red-500 hover:text-red-700"
                   aria-label={`Remove expense: ${expense.description}`}>
-                  <TrashIcon className="w-4 h-4" />
+                  <TrashIcon className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
-            <div className="mt-2 flex flex-wrap gap-1">
+            <div className="mt-1 flex flex-wrap gap-1">
               {expense.splits.map(split => (
                 <span key={split.userId} className="split-chip">
-                  {getName(split.userId)}: <span className="font-mono">${split.amount.toFixed(2)}</span>
+                  {getName(split.userId)}: <span className="font-mono">{split.amount.toFixed(2)}</span>
                 </span>
               ))}
             </div>
+            {expense.receiptImage && (
+              <button type="button" className="mt-2 receipt-thumb" onClick={() => setViewingReceipt(expense.receiptImage!)}>
+                <img src={expense.receiptImage} alt="Receipt" className="receipt-thumb-img" />
+                <span className="text-xs text-[var(--muted)]">View receipt</span>
+              </button>
+            )}
           </li>
         ))}
       </ul>
+      {viewingReceipt && (
+        <div className="receipt-overlay" onClick={() => setViewingReceipt(null)}>
+          <img src={viewingReceipt} alt="Receipt full view" className="receipt-overlay-img" />
+        </div>
+      )}
     </section>
   );
 }

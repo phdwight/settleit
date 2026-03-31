@@ -28,7 +28,7 @@ export function DebtSummary() {
         <div className="totals-bar mb-4">
           <div className="total-item">
             <span className="total-label">Total Spent</span>
-            <span className="total-value font-mono">${total.toFixed(2)}</span>
+            <span className="total-value font-mono">{total.toFixed(2)}</span>
           </div>
           <div className="total-item">
             <span className="total-label">Expenses</span>
@@ -55,7 +55,7 @@ export function DebtSummary() {
                 <ArrowRightIcon className="w-4 h-4" />
               </div>
               <span className="debt-name to">{getName(debt.to)}</span>
-              <span className="debt-amount font-mono ml-auto">${debt.amount.toFixed(2)}</span>
+              <span className="debt-amount font-mono ml-auto">{debt.amount.toFixed(2)}</span>
             </li>
           ))}
         </ul>
