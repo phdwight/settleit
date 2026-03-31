@@ -629,6 +629,7 @@ select.input {
 @media (max-width: 640px) {
   .card { padding: 1rem; }
   .app-title { font-size: 1.125rem; }
+  .logo-icon { width: 2rem; height: 2rem; font-size: 1rem; }
   .auto-distribute-bar { flex-wrap: wrap; }
 }
 
