@@ -341,6 +341,7 @@ export function ExpenseForm() {
             onChange={handleReceiptChange} className="input text-sm" />
           {receiptImage && (
             <div className="mt-2 relative inline-block">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={receiptImage} alt="Receipt preview" className="receipt-preview" />
               <button type="button" onClick={() => { setReceiptImage(undefined); if (fileInputRef.current) fileInputRef.current.value = ''; }}
                 className="icon-btn receipt-remove" aria-label="Remove receipt">✕</button>

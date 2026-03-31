@@ -103,18 +103,14 @@ const calculator = new SplitCalculator();
 const simplifier = new DebtSimplifier();
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [initialized, setInitialized] = React.useState(false);
-
-  useEffect(() => {
+  const [state, dispatch] = useReducer(reducer, initialState, (init) => {
     const saved = storage.load();
-    if (saved) dispatch({ type: 'SET_STATE', payload: saved });
-    setInitialized(true);
-  }, []);
+    return saved ?? init;
+  });
 
   useEffect(() => {
-    if (initialized) storage.save(state);
-  }, [state, initialized]);
+    storage.save(state);
+  }, [state]);
 
   const activeEvent = useMemo(() => state.events.find(e => e.id === state.activeEventId) ?? null, [state]);
 

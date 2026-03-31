@@ -59,6 +59,7 @@ export function ExpenseList() {
             </div>
             {expense.receiptImage && (
               <button type="button" className="mt-2 receipt-thumb" onClick={() => setViewingReceipt(expense.receiptImage!)}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={expense.receiptImage} alt="Receipt" className="receipt-thumb-img" />
                 <span className="text-xs text-[var(--muted)]">View receipt</span>
               </button>
@@ -68,6 +69,7 @@ export function ExpenseList() {
       </ul>
       {viewingReceipt && (
         <div className="receipt-overlay" onClick={() => setViewingReceipt(null)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={viewingReceipt} alt="Receipt full view" className="receipt-overlay-img" />
         </div>
       )}
