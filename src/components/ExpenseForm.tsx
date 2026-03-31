@@ -220,6 +220,28 @@ export function ExpenseForm() {
           </div>
           {payerCount > 1 && (
             <div className="space-y-2">
+              <div className="auto-distribute-bar">
+                <span className="text-xs text-[var(--text-secondary)]">
+                  Split <strong className="font-mono">{totalAmount.toFixed(2)}</strong> equally among {payerCount}?
+                </span>
+                <button type="button" className="btn btn-ghost btn-sm"
+                  onClick={() => {
+                    const ids = Object.keys(payers);
+                    const each = Math.round((totalAmount / ids.length) * 100) / 100;
+                    const updated: Record<string, string> = {};
+                    ids.forEach((id, i) => {
+                      if (i === ids.length - 1) {
+                        updated[id] = (Math.round((totalAmount - each * (ids.length - 1)) * 100) / 100).toFixed(2);
+                      } else {
+                        updated[id] = each.toFixed(2);
+                      }
+                    });
+                    setPayers(updated);
+                  }}
+                  disabled={totalAmount <= 0}>
+                  Apply
+                </button>
+              </div>
               {Object.keys(payers).map(id => {
                 const p = participants.find(pp => pp.id === id);
                 if (!p) return null;

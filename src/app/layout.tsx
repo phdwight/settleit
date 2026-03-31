@@ -45,6 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <main id="main-content" tabIndex={-1}>
               {children}
             </main>
+            <footer className="text-center text-[10px] text-[var(--muted)] py-3 opacity-50">
+              v{process.env.NEXT_PUBLIC_BUILD_VERSION}
+            </footer>
           </AppProvider>
         </ThemeProvider>
       </body>
