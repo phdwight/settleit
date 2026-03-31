@@ -71,6 +71,7 @@
 html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -80,6 +81,7 @@ body {
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   line-height: 1.6;
   min-height: 100dvh;
+  overflow-x: hidden;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -164,6 +166,7 @@ body {
 
 .input {
   width: 100%;
+  min-width: 0;
   padding: 0.625rem 0.875rem;
   background-color: var(--surface-elevated);
   border: 1px solid var(--border);
@@ -626,6 +629,7 @@ select.input {
 @media (max-width: 640px) {
   .card { padding: 1rem; }
   .app-title { font-size: 1.125rem; }
+  .auto-distribute-bar { flex-wrap: wrap; }
 }
 
 /* =========================================
