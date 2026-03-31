@@ -1,7 +1,7 @@
 const CACHE_NAME = 'settleit-v1';
 const STATIC_ASSETS = [
-  '/',
-  '/manifest.json',
+  './',
+  './manifest.json',
 ];
 
 self.addEventListener('install', (event) => {
