@@ -12,13 +12,17 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'light';
+  const [theme, setThemeState] = useState<Theme>('light');
+
+  useEffect(() => {
     const saved = localStorage.getItem('settleit_theme') as Theme | null;
-    if (saved && ['light', 'dark', 'high-contrast'].includes(saved)) return saved;
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
-    return 'light';
-  });
+    if (saved && ['light', 'dark', 'high-contrast'].includes(saved)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setThemeState(saved);
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setThemeState('dark');
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
