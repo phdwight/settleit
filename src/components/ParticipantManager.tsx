@@ -5,7 +5,12 @@ import { useApp } from '@/contexts/AppContext';
 import { UserPlusIcon, XMarkIcon } from '@/components/icons';
 import { Accordion } from '@/components/Accordion';
 
-export function ParticipantManager() {
+interface ParticipantManagerProps {
+  open?: boolean;
+  onToggle?: (open: boolean) => void;
+}
+
+export function ParticipantManager({ open, onToggle }: ParticipantManagerProps) {
   const { participants, addParticipant, removeParticipant } = useApp();
   const [name, setName] = useState('');
 
@@ -17,7 +22,7 @@ export function ParticipantManager() {
   };
 
   return (
-    <Accordion title="Participants" headingId="participants-heading" badge={participants.length > 0 ? <span className="badge ml-2">{participants.length}</span> : undefined}>
+    <Accordion title="Participants" headingId="participants-heading" open={open} onToggle={onToggle} badge={participants.length > 0 ? <span className="badge ml-2">{participants.length}</span> : undefined}>
       <div className="flex gap-2 mb-4">
         <input
           type="text"

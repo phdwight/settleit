@@ -5,6 +5,11 @@ import { useApp } from '@/contexts/AppContext';
 import type { SplitType } from '@/lib/types';
 import { Accordion } from '@/components/Accordion';
 
+interface ExpenseFormProps {
+  open?: boolean;
+  onToggle?: (open: boolean) => void;
+}
+
 function downscaleImage(file: File, maxDim: number, quality: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -30,7 +35,7 @@ function downscaleImage(file: File, maxDim: number, quality: number): Promise<st
   });
 }
 
-export function ExpenseForm() {
+export function ExpenseForm({ open, onToggle }: ExpenseFormProps) {
   const { participants, addExpense } = useApp();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -182,7 +187,7 @@ export function ExpenseForm() {
 
   if (participants.length === 0) {
     return (
-      <Accordion title="Add Expense" headingId="expense-heading">
+      <Accordion title="Add Expense" headingId="expense-heading" open={open} onToggle={onToggle}>
         <p className="empty-state">Add at least one participant before adding expenses.</p>
       </Accordion>
     );

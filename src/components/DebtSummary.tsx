@@ -4,7 +4,12 @@ import { useApp } from '@/contexts/AppContext';
 import { ArrowRightIcon, CheckCircleIcon } from '@/components/icons';
 import { Accordion } from '@/components/Accordion';
 
-export function DebtSummary() {
+interface DebtSummaryProps {
+  open?: boolean;
+  onToggle?: (open: boolean) => void;
+}
+
+export function DebtSummary({ open, onToggle }: DebtSummaryProps) {
   const { debts, participants, expenses, reset } = useApp();
 
   const getName = (id: string) => participants.find(p => p.id === id)?.name ?? 'Unknown';
@@ -22,7 +27,7 @@ export function DebtSummary() {
   ) : undefined;
 
   return (
-    <Accordion title="Settlement Summary" headingId="summary-heading" headerRight={resetButton}>
+    <Accordion title="Settlement Summary" headingId="summary-heading" open={open} onToggle={onToggle} headerRight={resetButton}>
       {expenses.length > 0 && (
         <div className="totals-bar mb-4">
           <div className="total-item">

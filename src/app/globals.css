@@ -159,6 +159,22 @@ body {
 /* =========================================
    Accordion
    ========================================= */
+.accordion-group {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.accordion-section {
+  padding: 1.5rem;
+}
+
+.accordion-group .accordion-section + .accordion-section {
+  border-top: 1px solid var(--border);
+}
+
 .accordion-trigger {
   display: flex;
   align-items: center;
@@ -679,6 +695,7 @@ select.input {
    ========================================= */
 @media (max-width: 640px) {
   .card { padding: 1rem; }
+  .accordion-section { padding: 1rem; }
   .app-title { font-size: 1.125rem; }
   .logo-icon { width: 2rem; height: 2rem; font-size: 1rem; }
   .auto-distribute-bar { flex-wrap: wrap; }

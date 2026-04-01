@@ -5,7 +5,12 @@ import { useApp } from '@/contexts/AppContext';
 import { TrashIcon } from '@/components/icons';
 import { Accordion } from '@/components/Accordion';
 
-export function ExpenseList() {
+interface ExpenseListProps {
+  open?: boolean;
+  onToggle?: (open: boolean) => void;
+}
+
+export function ExpenseList({ open, onToggle }: ExpenseListProps) {
   const { expenses, participants, removeExpense } = useApp();
   const [viewingReceipt, setViewingReceipt] = useState<string | null>(null);
 
@@ -20,14 +25,14 @@ export function ExpenseList() {
 
   if (expenses.length === 0) {
     return (
-      <Accordion title="Expenses" headingId="expenses-heading">
+      <Accordion title="Expenses" headingId="expenses-heading" open={open} onToggle={onToggle}>
         <p className="empty-state">No expenses yet.</p>
       </Accordion>
     );
   }
 
   return (
-    <Accordion title="Expenses" headingId="expenses-heading" badge={<span className="badge ml-2">{expenses.length}</span>}>
+    <Accordion title="Expenses" headingId="expenses-heading" open={open} onToggle={onToggle} badge={<span className="badge ml-2">{expenses.length}</span>}>
       <ul className="space-y-3" role="list">
         {[...expenses].reverse().map(expense => (
           <li key={expense.id} className="expense-item">
