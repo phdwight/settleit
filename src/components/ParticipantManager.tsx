@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { UserPlusIcon, XMarkIcon } from '@/components/icons';
+import { Accordion } from '@/components/Accordion';
 
 export function ParticipantManager() {
   const { participants, addParticipant, removeParticipant } = useApp();
@@ -16,8 +17,7 @@ export function ParticipantManager() {
   };
 
   return (
-    <section aria-labelledby="participants-heading" className="card">
-      <h2 id="participants-heading" className="section-title">Participants</h2>
+    <Accordion title="Participants" headingId="participants-heading" badge={participants.length > 0 ? <span className="badge ml-2">{participants.length}</span> : undefined}>
       <div className="flex gap-2 mb-4">
         <input
           type="text"
@@ -53,6 +53,6 @@ export function ParticipantManager() {
           ))}
         </ul>
       )}
-    </section>
+    </Accordion>
   );
 }

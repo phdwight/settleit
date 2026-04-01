@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { TrashIcon } from '@/components/icons';
+import { Accordion } from '@/components/Accordion';
 
 export function ExpenseList() {
   const { expenses, participants, removeExpense } = useApp();
@@ -19,19 +20,14 @@ export function ExpenseList() {
 
   if (expenses.length === 0) {
     return (
-      <section aria-labelledby="expenses-heading" className="card">
-        <h2 id="expenses-heading" className="section-title">Expenses</h2>
+      <Accordion title="Expenses" headingId="expenses-heading">
         <p className="empty-state">No expenses yet.</p>
-      </section>
+      </Accordion>
     );
   }
 
   return (
-    <section aria-labelledby="expenses-heading" className="card">
-      <h2 id="expenses-heading" className="section-title">
-        Expenses
-        <span className="badge ml-2">{expenses.length}</span>
-      </h2>
+    <Accordion title="Expenses" headingId="expenses-heading" badge={<span className="badge ml-2">{expenses.length}</span>}>
       <ul className="space-y-3" role="list">
         {[...expenses].reverse().map(expense => (
           <li key={expense.id} className="expense-item">
@@ -73,6 +69,6 @@ export function ExpenseList() {
           <img src={viewingReceipt} alt="Receipt full view" className="receipt-overlay-img" />
         </div>
       )}
-    </section>
+    </Accordion>
   );
 }

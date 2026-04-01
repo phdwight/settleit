@@ -2,6 +2,7 @@
 
 import { useApp } from '@/contexts/AppContext';
 import { ArrowRightIcon, CheckCircleIcon } from '@/components/icons';
+import { Accordion } from '@/components/Accordion';
 
 export function DebtSummary() {
   const { debts, participants, expenses, reset } = useApp();
@@ -10,20 +11,18 @@ export function DebtSummary() {
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
+  const resetButton = (participants.length > 0 || expenses.length > 0) ? (
+    <button
+      onClick={(e) => { e.stopPropagation(); if (confirm('Reset all data? This cannot be undone.')) reset(); }}
+      className="btn btn-sm btn-ghost"
+      aria-label="Reset all data"
+    >
+      Reset
+    </button>
+  ) : undefined;
+
   return (
-    <section aria-labelledby="summary-heading" className="card">
-      <div className="flex items-center justify-between mb-4">
-        <h2 id="summary-heading" className="section-title" style={{ marginBottom: 0 }}>Settlement Summary</h2>
-        {(participants.length > 0 || expenses.length > 0) && (
-          <button
-            onClick={() => { if (confirm('Reset all data? This cannot be undone.')) reset(); }}
-            className="btn btn-sm btn-ghost"
-            aria-label="Reset all data"
-          >
-            Reset
-          </button>
-        )}
-      </div>
+    <Accordion title="Settlement Summary" headingId="summary-heading" headerRight={resetButton}>
       {expenses.length > 0 && (
         <div className="totals-bar mb-4">
           <div className="total-item">
@@ -60,6 +59,6 @@ export function DebtSummary() {
           ))}
         </ul>
       )}
-    </section>
+    </Accordion>
   );
 }

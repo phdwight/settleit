@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import type { SplitType } from '@/lib/types';
+import { Accordion } from '@/components/Accordion';
 
 function downscaleImage(file: File, maxDim: number, quality: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -181,16 +182,14 @@ export function ExpenseForm() {
 
   if (participants.length === 0) {
     return (
-      <section aria-labelledby="expense-heading" className="card">
-        <h2 id="expense-heading" className="section-title">Add Expense</h2>
+      <Accordion title="Add Expense" headingId="expense-heading">
         <p className="empty-state">Add at least one participant before adding expenses.</p>
-      </section>
+      </Accordion>
     );
   }
 
   return (
-    <section aria-labelledby="expense-heading" className="card">
-      <h2 id="expense-heading" className="section-title">Add Expense</h2>
+    <Accordion title="Add Expense" headingId="expense-heading">
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {error && <p role="alert" className="error-msg">{error}</p>}
         <div className="form-group">
@@ -350,6 +349,6 @@ export function ExpenseForm() {
         </div>
         <button type="submit" className="btn btn-primary w-full">Add Expense</button>
       </form>
-    </section>
+    </Accordion>
   );
 }
