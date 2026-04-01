@@ -16,6 +16,8 @@ interface AppContextValue {
   selectEvent: (id: string) => void;
   deleteEvent: (id: string) => void;
   goBack: () => void;
+  exportEvent: () => void;
+  importEvent: (file: File) => Promise<void>;
   // Active-event scoped
   participants: User[];
   expenses: Expense[];
@@ -187,6 +189,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'RESET' });
   }, []);
 
+  const exportEvent = useCallback(() => {
+    const event = state.events.find(e => e.id === state.activeEventId);
+    if (!event) return;
+    const exportData = { version: 1, event };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${event.name.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [state.events, state.activeEventId]);
+
+  const importEvent = useCallback(async (file: File) => {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data || !data.event || !data.event.name || !Array.isArray(data.event.participants) || !Array.isArray(data.event.expenses)) {
+      throw new Error('Invalid file format');
+    }
+    const imported: Event = {
+      ...data.event,
+      id: generateId(),
+      name: data.event.name,
+    };
+    dispatch({ type: 'CREATE_EVENT', payload: imported });
+  }, []);
+
   const participants = activeEvent?.participants ?? [];
   const expenses = activeEvent?.expenses ?? [];
   const debts = simplifier.simplify(expenses, participants);
@@ -200,6 +229,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       selectEvent,
       deleteEvent,
       goBack,
+      exportEvent,
+      importEvent,
       participants,
       expenses,
       addParticipant,
