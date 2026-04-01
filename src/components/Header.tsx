@@ -41,7 +41,7 @@ export function Header() {
             <span>≋</span>
           </div>
           <div className="min-w-0">
-            <h1 className="app-title truncate">SettleIt</h1>
+            <h1 className="app-title truncate">Settle<span className="text-[var(--accent)]">.</span>It</h1>
             <p className="app-subtitle truncate hidden sm:block">Split bills, not friendships.</p>
           </div>
         </div>

@@ -7,13 +7,13 @@ import { InstallPrompt } from '@/components/InstallPrompt';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 
 export const metadata: Metadata = {
-  title: 'SettleIt – Split Bills, Not Friendships',
+  title: 'Settle.It – Split Bills, Not Friendships',
   description: 'A fast, offline-first PWA to split bills and track shared expenses among friends and groups.',
   manifest: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/manifest.json`,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'SettleIt',
+    title: 'Settle.It',
   },
   icons: {
     icon: [

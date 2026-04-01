@@ -1,6 +1,6 @@
 {
-  "name": "SettleIt – Split Bills, Not Friendships",
-  "short_name": "SettleIt",
+  "name": "Settle.It – Split Bills, Not Friendships",
+  "short_name": "Settle.It",
   "description": "A fast, offline-first PWA to split bills and track shared expenses among friends.",
   "start_url": ".",
   "display": "standalone",

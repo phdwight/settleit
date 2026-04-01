@@ -5,6 +5,7 @@ import type { AppState, Event, User, Expense, SplitType, PayerDetail } from '@/l
 import { StorageService } from '@/lib/StorageService';
 import { SplitCalculator } from '@/lib/SplitCalculator';
 import { DebtSimplifier } from '@/lib/DebtSimplifier';
+import { EventExportService } from '@/lib/EventExportService';
 import { generateId } from '@/lib/generateId';
 
 interface AppContextValue {
@@ -103,6 +104,7 @@ const AppContext = createContext<AppContextValue | null>(null);
 const storage = new StorageService();
 const calculator = new SplitCalculator();
 const simplifier = new DebtSimplifier();
+const exportService = new EventExportService();
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -192,27 +194,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const exportEvent = useCallback(() => {
     const event = state.events.find(e => e.id === state.activeEventId);
     if (!event) return;
-    const exportData = { version: 1, event };
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${event.name.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    exportService.export(event);
   }, [state.events, state.activeEventId]);
 
   const importEvent = useCallback(async (file: File) => {
-    const text = await file.text();
-    const data = JSON.parse(text);
-    if (!data || !data.event || !data.event.name || !Array.isArray(data.event.participants) || !Array.isArray(data.event.expenses)) {
-      throw new Error('Invalid file format');
-    }
-    const imported: Event = {
-      ...data.event,
-      id: generateId(),
-      name: data.event.name,
-    };
+    const imported = await exportService.import(file);
     dispatch({ type: 'CREATE_EVENT', payload: imported });
   }, []);
 

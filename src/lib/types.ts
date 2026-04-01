@@ -56,3 +56,10 @@ export interface SplitStrategy {
   readonly type: SplitType;
   calculate(totalAmount: number, participantIds: string[], manualAmounts?: Record<string, number>): SplitDetail[];
 }
+
+// Dependency Inversion: Storage interface
+export interface IStorageService {
+  load(): AppState | null;
+  save(state: AppState): void;
+  clear(): void;
+}

@@ -1,9 +1,9 @@
-import type { AppState } from './types';
+import type { AppState, IStorageService } from './types';
 import { generateId } from './generateId';
 
 const STORAGE_KEY = 'settleit_state';
 
-export class StorageService {
+export class StorageService implements IStorageService {
   load(): AppState | null {
     if (typeof window === 'undefined') return null;
     try {
