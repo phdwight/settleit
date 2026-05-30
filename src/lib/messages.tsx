@@ -40,6 +40,10 @@ export const messages = {
       `${count} other ${plural(count, 'expense')} will be updated to drop their share.`,
     removeDebtsNote: 'Any debts involving this participant will be recalculated.',
     removeNoImpact: 'They have no expenses recorded, so no other data will be affected.',
+    removeBlockedTooltip:
+      'This participant has paid for one or more expenses. Delete or reassign those expenses first.',
+    removeBlockedHint:
+      'Remove disabled: this participant has paid for one or more expenses. Delete or reassign those expenses first.',
   },
 
   expenses: {
