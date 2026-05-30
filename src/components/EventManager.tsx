@@ -3,16 +3,26 @@
 import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { TrashIcon } from '@/components/icons';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { messages } from '@/lib/messages';
 
 export function EventManager() {
   const { events, createEvent, selectEvent, deleteEvent } = useApp();
   const [name, setName] = useState('');
+  const [pendingDeletion, setPendingDeletion] = useState<string | null>(null);
 
   const handleCreate = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
     createEvent(trimmed);
     setName('');
+  };
+
+  const pendingEvent = events.find(e => e.id === pendingDeletion) ?? null;
+
+  const confirmDelete = () => {
+    if (pendingDeletion) deleteEvent(pendingDeletion);
+    setPendingDeletion(null);
   };
 
   return (
@@ -50,7 +60,7 @@ export function EventManager() {
                   </span>
                 </button>
                 <button
-                  onClick={() => deleteEvent(event.id)}
+                  onClick={() => setPendingDeletion(event.id)}
                   className="icon-btn text-red-500 hover:text-red-700 flex-shrink-0"
                   aria-label={`Delete event: ${event.name}`}
                 >
@@ -61,6 +71,26 @@ export function EventManager() {
           </ul>
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingEvent !== null}
+        title={pendingEvent ? messages.events.deleteTitle(pendingEvent.name) : ''}
+        confirmLabel={messages.events.deleteConfirm}
+        message={
+          pendingEvent && (
+            <>
+              <p>{messages.events.deleteIntro}</p>
+              <ul>
+                <li>{messages.events.deleteParticipantsItem(pendingEvent.participants.length)}</li>
+                <li>{messages.events.deleteExpensesItem(pendingEvent.expenses.length)}</li>
+                <li>{messages.events.deleteHistoryItem}</li>
+              </ul>
+            </>
+          )
+        }
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeletion(null)}
+      />
     </div>
   );
 }

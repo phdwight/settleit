@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { ArrowRightIcon, CheckCircleIcon } from '@/components/icons';
 import { Accordion } from '@/components/Accordion';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { messages } from '@/lib/messages';
 
 interface DebtSummaryProps {
   open?: boolean;
@@ -11,6 +14,7 @@ interface DebtSummaryProps {
 
 export function DebtSummary({ open, onToggle }: DebtSummaryProps) {
   const { debts, participants, expenses, reset } = useApp();
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   const getName = (id: string) => participants.find(p => p.id === id)?.name ?? 'Unknown';
 
@@ -18,13 +22,18 @@ export function DebtSummary({ open, onToggle }: DebtSummaryProps) {
 
   const resetButton = (participants.length > 0 || expenses.length > 0) ? (
     <button
-      onClick={(e) => { e.stopPropagation(); if (confirm('Reset all data? This cannot be undone.')) reset(); }}
+      onClick={(e) => { e.stopPropagation(); setConfirmingReset(true); }}
       className="btn btn-sm btn-ghost"
       aria-label="Reset all data"
     >
-      Reset
+      {messages.summary.resetButton}
     </button>
   ) : undefined;
+
+  const handleReset = () => {
+    reset();
+    setConfirmingReset(false);
+  };
 
   return (
     <Accordion title="Settlement Summary" headingId="summary-heading" open={open} onToggle={onToggle} headerRight={resetButton}>
@@ -64,6 +73,14 @@ export function DebtSummary({ open, onToggle }: DebtSummaryProps) {
           ))}
         </ul>
       )}
+      <ConfirmDialog
+        open={confirmingReset}
+        title={messages.summary.resetTitle}
+        confirmLabel={messages.summary.resetConfirm}
+        message={messages.summary.resetBody(participants.length, expenses.length)}
+        onConfirm={handleReset}
+        onCancel={() => setConfirmingReset(false)}
+      />
     </Accordion>
   );
 }

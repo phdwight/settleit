@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import type { SplitType } from '@/lib/types';
+import { roundCents } from '@/lib/money';
 import { Accordion } from '@/components/Accordion';
 
 interface ExpenseFormProps {
@@ -106,7 +107,7 @@ export function ExpenseForm({ open, onToggle }: ExpenseFormProps) {
   }, [manualAmounts, splitParticipants]);
 
   const totalAmount = parseFloat(amount) || 0;
-  const remaining = Math.round((totalAmount - manualTotal) * 100) / 100;
+  const remaining = roundCents(totalAmount - manualTotal);
 
   // Check if we can offer auto-distribute: remaining > 0 and at least one person has no value
   const canAutoDistribute = useMemo(() => {
@@ -121,13 +122,13 @@ export function ExpenseForm({ open, onToggle }: ExpenseFormProps) {
       .filter(p => !(parseFloat(manualAmounts[p.id] ?? '') > 0))
       .map(p => p.id);
     if (emptyIds.length === 0) return;
-    const each = Math.round((remaining / emptyIds.length) * 100) / 100;
+    const each = roundCents(remaining / emptyIds.length);
     // Adjust last one for rounding
     const updates: Record<string, string> = {};
     emptyIds.forEach((id, i) => {
       if (i === emptyIds.length - 1) {
         const allocated = each * (emptyIds.length - 1);
-        updates[id] = (Math.round((remaining - allocated) * 100) / 100).toFixed(2);
+        updates[id] = roundCents(remaining - allocated).toFixed(2);
       } else {
         updates[id] = each.toFixed(2);
       }
@@ -231,11 +232,11 @@ export function ExpenseForm({ open, onToggle }: ExpenseFormProps) {
                 <button type="button" className="btn btn-ghost btn-sm"
                   onClick={() => {
                     const ids = Object.keys(payers);
-                    const each = Math.round((totalAmount / ids.length) * 100) / 100;
+                    const each = roundCents(totalAmount / ids.length);
                     const updated: Record<string, string> = {};
                     ids.forEach((id, i) => {
                       if (i === ids.length - 1) {
-                        updated[id] = (Math.round((totalAmount - each * (ids.length - 1)) * 100) / 100).toFixed(2);
+                        updated[id] = roundCents(totalAmount - each * (ids.length - 1)).toFixed(2);
                       } else {
                         updated[id] = each.toFixed(2);
                       }
@@ -261,7 +262,7 @@ export function ExpenseForm({ open, onToggle }: ExpenseFormProps) {
               })}
               {(() => {
                 const payerTotal = Object.values(payers).reduce((s, v) => s + (parseFloat(v) || 0), 0);
-                const lacking = Math.round((totalAmount - payerTotal) * 100) / 100;
+                const lacking = roundCents(totalAmount - payerTotal);
                 return (
                   <p className="text-xs text-[var(--muted)]">
                     Payer total: <span className="font-mono">{payerTotal.toFixed(2)}</span> / <span className="font-mono">{totalAmount.toFixed(2)}</span>

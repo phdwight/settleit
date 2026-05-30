@@ -33,6 +33,7 @@ export function usePanelState(eventId: string | null) {
 
   useEffect(() => {
     if (eventId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPanels(loadPanels(eventId));
     }
   }, [eventId]);

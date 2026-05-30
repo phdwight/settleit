@@ -318,6 +318,14 @@ select.input {
 
 .btn-sm { padding: 0.375rem 0.875rem; font-size: 0.8125rem; }
 
+.btn-danger {
+  background-color: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+.btn-danger:hover { background-color: #b91c1c; border-color: #b91c1c; }
+
 .icon-btn {
   display: inline-flex;
   align-items: center;
@@ -680,6 +688,58 @@ select.input {
 
 .event-card > .icon-btn {
   margin-right: 0.75rem;
+}
+
+/* =========================================
+   Confirm dialog
+   ========================================= */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.confirm-dialog {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md, var(--shadow));
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.confirm-dialog-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.confirm-dialog-message {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.confirm-dialog-message ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 /* =========================================

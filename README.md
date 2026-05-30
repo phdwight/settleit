@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Settleit
 
-## Getting Started
+A privacy-first, offline-capable expense splitter built with Next.js. Track who paid for what in shared events (trips, dinners, household bills) and get a minimal set of settlement transactions.
 
-First, run the development server:
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command         | Purpose                     |
+| --------------- | --------------------------- |
+| `npm run dev`   | Start the Next.js dev server |
+| `npm run build` | Production build            |
+| `npm start`     | Run the production build    |
+| `npm run lint`  | Lint with ESLint            |
+| `npm test`      | Run the Jest test suite     |
 
-## Learn More
+## Project structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+  app/              Next.js app router entry points and global styles
+  components/       Presentational + interactive UI
+  contexts/         React context providers (AppContext, ThemeContext)
+  hooks/            Custom hooks
+  lib/              Domain logic, services, and shared utilities
+    messages.tsx    Centralized user-facing strings (i18n-ready)
+    strategies/     Split-calculation strategies
+test/               Jest tests mirroring the src/ layout
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Confirmations for destructive actions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Deleting an **event** or removing a **participant** opens a `ConfirmDialog`
+that explains exactly what will be lost (expense counts, receipts, debts).
+The dialog is accessible (`role="dialog"`, `aria-modal`, focus management,
+Escape to cancel, click-outside to dismiss).
 
-## Deploy on Vercel
+## Internationalization
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+All confirmation-flow strings live in
+[src/lib/messages.tsx](src/lib/messages.tsx), grouped by feature
+(`confirmDialog`, `events`, `participants`). Values that need variables
+(names, counts) are exposed as functions, and a `plural()` helper handles
+English plural forms.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To swap in a real i18n library later, replace the `messages` export with a
+hook (e.g. `useMessages()`) that returns the same shape sourced from the
+active locale. Component call sites won't need to change.
+
+## Testing
+
+Tests live under `test/` and use Jest + ts-jest with `jsdom`. Component
+tests use `@testing-library/react`.
+
+```bash
+npm test
+```
+
+Coverage currently includes the reducer, split strategies, debt
+simplification, storage/export services, the messages module, and the
+`ConfirmDialog` component.

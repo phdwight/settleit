@@ -1,4 +1,5 @@
 import type { Expense, Debt, User } from './types';
+import { roundCents, MONEY_EPSILON } from './money';
 
 export class DebtSimplifier {
   simplify(expenses: Expense[], participants: User[]): Debt[] {
@@ -27,9 +28,9 @@ export class DebtSimplifier {
     const debtors: { id: string; amount: number }[] = [];
 
     Object.entries(balance).forEach(([id, amt]) => {
-      const rounded = Math.round(amt * 100) / 100;
-      if (rounded > 0.005) creditors.push({ id, amount: rounded });
-      else if (rounded < -0.005) debtors.push({ id, amount: -rounded });
+      const rounded = roundCents(amt);
+      if (rounded > MONEY_EPSILON) creditors.push({ id, amount: rounded });
+      else if (rounded < -MONEY_EPSILON) debtors.push({ id, amount: -rounded });
     });
 
     const debts: Debt[] = [];
@@ -40,17 +41,17 @@ export class DebtSimplifier {
       const credit = creditors[ci];
       const debt = debtors[di];
       const settled = Math.min(credit.amount, debt.amount);
-      const roundedSettled = Math.round(settled * 100) / 100;
+      const roundedSettled = roundCents(settled);
 
-      if (roundedSettled > 0.005) {
+      if (roundedSettled > MONEY_EPSILON) {
         debts.push({ from: debt.id, to: credit.id, amount: roundedSettled });
       }
 
-      credit.amount = Math.round((credit.amount - settled) * 100) / 100;
-      debt.amount = Math.round((debt.amount - settled) * 100) / 100;
+      credit.amount = roundCents(credit.amount - settled);
+      debt.amount = roundCents(debt.amount - settled);
 
-      if (credit.amount < 0.005) ci++;
-      if (debt.amount < 0.005) di++;
+      if (credit.amount < MONEY_EPSILON) ci++;
+      if (debt.amount < MONEY_EPSILON) di++;
     }
 
     return debts;

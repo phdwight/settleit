@@ -50,6 +50,8 @@ type Action =
   | { type: 'REMOVE_EXPENSE'; payload: string }
   | { type: 'RESET' };
 
+export type { Action as AppAction };
+
 const initialState: AppState = { events: [], activeEventId: null };
 
 function updateActiveEvent(state: AppState, updater: (event: Event) => Event): AppState {
@@ -60,7 +62,7 @@ function updateActiveEvent(state: AppState, updater: (event: Event) => Event): A
   };
 }
 
-function reducer(state: AppState, action: Action): AppState {
+export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_STATE': return action.payload;
     case 'CREATE_EVENT': return { ...state, events: [...state.events, action.payload], activeEventId: action.payload.id };
