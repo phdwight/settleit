@@ -1,72 +1,9 @@
 /**
  * Tests for the AppContext reducer logic.
- * We extract and test the reducer directly by importing AppContext module.
+ * Imports the real reducer (single source of truth — handoff.md DRY rule).
  */
-import type { AppState, Event, User, Expense } from '@/lib/types';
-
-// We can't import the reducer directly since it's not exported,
-// so we test via the public API by rendering the provider.
-// Instead, we replicate the reducer here for pure unit testing.
-
-function updateActiveEvent(state: AppState, updater: (event: Event) => Event): AppState {
-  if (!state.activeEventId) return state;
-  return {
-    ...state,
-    events: state.events.map(e => e.id === state.activeEventId ? updater(e) : e),
-  };
-}
-
-type Action =
-  | { type: 'SET_STATE'; payload: AppState }
-  | { type: 'CREATE_EVENT'; payload: Event }
-  | { type: 'SELECT_EVENT'; payload: string }
-  | { type: 'DELETE_EVENT'; payload: string }
-  | { type: 'GO_BACK' }
-  | { type: 'ADD_PARTICIPANT'; payload: User }
-  | { type: 'REMOVE_PARTICIPANT'; payload: string }
-  | { type: 'ADD_EXPENSE'; payload: Expense }
-  | { type: 'REMOVE_EXPENSE'; payload: string }
-  | { type: 'RESET' };
-
-function reducer(state: AppState, action: Action): AppState {
-  switch (action.type) {
-    case 'SET_STATE': return action.payload;
-    case 'CREATE_EVENT': return { ...state, events: [...state.events, action.payload], activeEventId: action.payload.id };
-    case 'SELECT_EVENT': return { ...state, activeEventId: action.payload };
-    case 'DELETE_EVENT': {
-      const events = state.events.filter(e => e.id !== action.payload);
-      return { ...state, events, activeEventId: state.activeEventId === action.payload ? null : state.activeEventId };
-    }
-    case 'GO_BACK': return { ...state, activeEventId: null };
-    case 'ADD_PARTICIPANT': return updateActiveEvent(state, e => ({
-      ...e, participants: [...e.participants, action.payload],
-    }));
-    case 'REMOVE_PARTICIPANT': return updateActiveEvent(state, e => ({
-      ...e,
-      participants: e.participants.filter(p => p.id !== action.payload),
-      expenses: e.expenses.filter(ex => {
-        if (Array.isArray(ex.paidBy)) {
-          return ex.paidBy.some(py => py.userId !== action.payload);
-        }
-        return ex.paidBy !== action.payload;
-      }).map(ex => ({
-        ...ex,
-        paidBy: Array.isArray(ex.paidBy) ? ex.paidBy.filter(py => py.userId !== action.payload) : ex.paidBy,
-        splits: ex.splits.filter(s => s.userId !== action.payload),
-      })),
-    }));
-    case 'ADD_EXPENSE': return updateActiveEvent(state, e => ({
-      ...e, expenses: [...e.expenses, action.payload],
-    }));
-    case 'REMOVE_EXPENSE': return updateActiveEvent(state, e => ({
-      ...e, expenses: e.expenses.filter(ex => ex.id !== action.payload),
-    }));
-    case 'RESET': return updateActiveEvent(state, e => ({
-      ...e, participants: [], expenses: [],
-    }));
-    default: return state;
-  }
-}
+import type { AppState, Event, Expense } from '@/lib/types';
+import { reducer } from '@/contexts/AppContext';
 
 const makeEvent = (overrides: Partial<Event> = {}): Event => ({
   id: 'evt-1',
@@ -194,6 +131,67 @@ describe('AppContext reducer', () => {
       expect(next.events[0].expenses).toHaveLength(1);
       expect(next.events[0].expenses[0].splits).toHaveLength(1);
       expect(next.events[0].expenses[0].splits[0].userId).toBe('u1');
+    });
+
+    it('recomputes equal splits so remaining shares add up to the total', () => {
+      // Three-way equal split of $30 → $10 each.
+      const expense: Expense = {
+        id: 'exp-1',
+        description: 'Pizza',
+        amount: 30,
+        paidBy: [{ userId: 'u1', amount: 30 }],
+        splitType: 'equal',
+        splits: [
+          { userId: 'u1', amount: 10 },
+          { userId: 'u2', amount: 10 },
+          { userId: 'u3', amount: 10 },
+        ],
+        createdAt: 2000,
+      };
+      const state: AppState = {
+        events: [makeEvent({
+          participants: [
+            { id: 'u1', name: 'Alice' },
+            { id: 'u2', name: 'Bob' },
+            { id: 'u3', name: 'Carol' },
+          ],
+          expenses: [expense],
+        })],
+        activeEventId: 'evt-1',
+      };
+      const next = reducer(state, { type: 'REMOVE_PARTICIPANT', payload: 'u3' });
+      const updated = next.events[0].expenses[0];
+      expect(updated.splits).toHaveLength(2);
+      const total = updated.splits.reduce((s, x) => s + x.amount, 0);
+      expect(Math.abs(total - updated.amount)).toBeLessThan(0.01);
+    });
+
+    it('leaves manual split amounts untouched for surviving participants', () => {
+      const expense: Expense = {
+        id: 'exp-1',
+        description: 'Dinner',
+        amount: 50,
+        paidBy: [{ userId: 'u1', amount: 50 }],
+        splitType: 'manual',
+        splits: [
+          { userId: 'u1', amount: 20 },
+          { userId: 'u2', amount: 30 },
+        ],
+        createdAt: 2000,
+      };
+      const state: AppState = {
+        events: [makeEvent({
+          participants: [
+            { id: 'u1', name: 'Alice' },
+            { id: 'u2', name: 'Bob' },
+          ],
+          expenses: [expense],
+        })],
+        activeEventId: 'evt-1',
+      };
+      const next = reducer(state, { type: 'REMOVE_PARTICIPANT', payload: 'u2' });
+      const updated = next.events[0].expenses[0];
+      expect(updated.splits).toEqual([{ userId: 'u1', amount: 20 }]);
     });
   });
 

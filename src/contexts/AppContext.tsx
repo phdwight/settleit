@@ -50,6 +50,8 @@ type Action =
   | { type: 'REMOVE_EXPENSE'; payload: string }
   | { type: 'RESET' };
 
+export type { Action as AppAction };
+
 const initialState: AppState = { events: [], activeEventId: null };
 
 function updateActiveEvent(state: AppState, updater: (event: Event) => Event): AppState {
@@ -60,7 +62,7 @@ function updateActiveEvent(state: AppState, updater: (event: Event) => Event): A
   };
 }
 
-function reducer(state: AppState, action: Action): AppState {
+export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_STATE': return action.payload;
     case 'CREATE_EVENT': return { ...state, events: [...state.events, action.payload], activeEventId: action.payload.id };
@@ -81,11 +83,24 @@ function reducer(state: AppState, action: Action): AppState {
           return ex.paidBy.some(py => py.userId !== action.payload);
         }
         return ex.paidBy !== action.payload;
-      }).map(ex => ({
-        ...ex,
-        paidBy: Array.isArray(ex.paidBy) ? ex.paidBy.filter(py => py.userId !== action.payload) : ex.paidBy,
-        splits: ex.splits.filter(s => s.userId !== action.payload),
-      })),
+      }).map(ex => {
+        const remainingSplitIds = ex.splits
+          .filter(s => s.userId !== action.payload)
+          .map(s => s.userId);
+        // Equal splits: recompute so the surviving participants' shares add
+        // up to the expense total. Manual splits keep the user-entered
+        // amounts (the removed person's share is simply dropped).
+        const splits = ex.splitType === 'equal' && remainingSplitIds.length > 0
+          ? calculator.calculate(ex.amount, remainingSplitIds, 'equal')
+          : ex.splits.filter(s => s.userId !== action.payload);
+        return {
+          ...ex,
+          paidBy: Array.isArray(ex.paidBy)
+            ? ex.paidBy.filter(py => py.userId !== action.payload)
+            : ex.paidBy,
+          splits,
+        };
+      }),
     }));
     case 'ADD_EXPENSE': return updateActiveEvent(state, e => ({
       ...e, expenses: [...e.expenses, action.payload],

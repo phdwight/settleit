@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { TrashIcon } from '@/components/icons';
 import { Accordion } from '@/components/Accordion';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { messages } from '@/lib/messages';
 
 interface ExpenseListProps {
   open?: boolean;
@@ -13,6 +15,7 @@ interface ExpenseListProps {
 export function ExpenseList({ open, onToggle }: ExpenseListProps) {
   const { expenses, participants, removeExpense } = useApp();
   const [viewingReceipt, setViewingReceipt] = useState<string | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
 
   const getName = (id: string) => participants.find(p => p.id === id)?.name ?? 'Unknown';
 
@@ -21,6 +24,12 @@ export function ExpenseList({ open, onToggle }: ExpenseListProps) {
       return paidBy.map(p => `${getName(p.userId)}: ${p.amount.toFixed(2)}`).join(' · ');
     }
     return getName(paidBy as string);
+  };
+
+  const pendingExpense = expenses.find(e => e.id === pendingRemoval) ?? null;
+  const confirmRemove = () => {
+    if (pendingRemoval) removeExpense(pendingRemoval);
+    setPendingRemoval(null);
   };
 
   if (expenses.length === 0) {
@@ -45,7 +54,7 @@ export function ExpenseList({ open, onToggle }: ExpenseListProps) {
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <span className="amount-display">{expense.amount.toFixed(2)}</span>
-                <button onClick={() => removeExpense(expense.id)} className="icon-btn text-red-500 hover:text-red-700"
+                <button onClick={() => setPendingRemoval(expense.id)} className="icon-btn text-red-500 hover:text-red-700"
                   aria-label={`Remove expense: ${expense.description}`}>
                   <TrashIcon className="w-3.5 h-3.5" />
                 </button>
@@ -74,6 +83,17 @@ export function ExpenseList({ open, onToggle }: ExpenseListProps) {
           <img src={viewingReceipt} alt="Receipt full view" className="receipt-overlay-img" />
         </div>
       )}
+      <ConfirmDialog
+        open={pendingExpense !== null}
+        title={pendingExpense ? messages.expenses.removeTitle(pendingExpense.description) : ''}
+        confirmLabel={messages.expenses.removeConfirm}
+        message={
+          pendingExpense &&
+          messages.expenses.removeBody(pendingExpense.description, pendingExpense.amount.toFixed(2))
+        }
+        onConfirm={confirmRemove}
+        onCancel={() => setPendingRemoval(null)}
+      />
     </Accordion>
   );
 }
