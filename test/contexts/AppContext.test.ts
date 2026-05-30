@@ -4,6 +4,8 @@
  */
 import type { AppState, Event, Expense } from '@/lib/types';
 import { reducer } from '@/contexts/AppContext';
+import { DebtSimplifier } from '@/lib/DebtSimplifier';
+import { hasPaidAnyExpense } from '@/lib/participantGuards';
 
 const makeEvent = (overrides: Partial<Event> = {}): Event => ({
   id: 'evt-1',
@@ -114,6 +116,44 @@ describe('AppContext reducer', () => {
       const next = reducer(state, { type: 'REMOVE_EXPENSE', payload: 'exp-1' });
       expect(next.events[0].expenses).toHaveLength(0);
     });
+
+    it('unblocks a participant once their last paid expense is removed', () => {
+      const state: AppState = {
+        events: [makeEvent({
+          participants: [
+            { id: 'u1', name: 'Alice' },
+            { id: 'u2', name: 'Bob' },
+          ],
+          expenses: [makeExpense()], // u1 is the payer
+        })],
+        activeEventId: 'evt-1',
+      };
+      const before = state.events[0].expenses;
+      expect(hasPaidAnyExpense('u1', before)).toBe(true);
+
+      const next = reducer(state, { type: 'REMOVE_EXPENSE', payload: 'exp-1' });
+      const after = next.events[0].expenses;
+      expect(hasPaidAnyExpense('u1', after)).toBe(false);
+    });
+
+    it('recomputes settlement debts after an expense is removed', () => {
+      const simplifier = new DebtSimplifier();
+      const participants = [
+        { id: 'u1', name: 'Alice' },
+        { id: 'u2', name: 'Bob' },
+      ];
+      const state: AppState = {
+        events: [makeEvent({ participants, expenses: [makeExpense()] })],
+        activeEventId: 'evt-1',
+      };
+      // Before: u2 owes u1 15
+      const debtsBefore = simplifier.simplify(state.events[0].expenses, participants);
+      expect(debtsBefore).toEqual([{ from: 'u2', to: 'u1', amount: 15 }]);
+
+      const next = reducer(state, { type: 'REMOVE_EXPENSE', payload: 'exp-1' });
+      const debtsAfter = simplifier.simplify(next.events[0].expenses, participants);
+      expect(debtsAfter).toEqual([]);
+    });
   });
 
   describe('REMOVE_PARTICIPANT', () => {
@@ -192,6 +232,24 @@ describe('AppContext reducer', () => {
       const next = reducer(state, { type: 'REMOVE_PARTICIPANT', payload: 'u2' });
       const updated = next.events[0].expenses[0];
       expect(updated.splits).toEqual([{ userId: 'u1', amount: 20 }]);
+    });
+
+    it('blocks removal of a participant who has paid for any expense', () => {
+      const state: AppState = {
+        events: [makeEvent({
+          participants: [
+            { id: 'u1', name: 'Alice' },
+            { id: 'u2', name: 'Bob' },
+          ],
+          expenses: [makeExpense()], // u1 is the payer
+        })],
+        activeEventId: 'evt-1',
+      };
+      const next = reducer(state, { type: 'REMOVE_PARTICIPANT', payload: 'u1' });
+      // State should be unchanged for the active event
+      expect(next.events[0].participants).toHaveLength(2);
+      expect(next.events[0].expenses).toHaveLength(1);
+      expect(next.events[0].expenses[0].paidBy).toEqual([{ userId: 'u1', amount: 30 }]);
     });
   });
 

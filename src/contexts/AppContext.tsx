@@ -7,6 +7,7 @@ import { SplitCalculator } from '@/lib/SplitCalculator';
 import { DebtSimplifier } from '@/lib/DebtSimplifier';
 import { EventExportService } from '@/lib/EventExportService';
 import { generateId } from '@/lib/generateId';
+import { hasPaidAnyExpense } from '@/lib/participantGuards';
 
 interface AppContextValue {
   // Event management
@@ -75,33 +76,27 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'ADD_PARTICIPANT': return updateActiveEvent(state, e => ({
       ...e, participants: [...e.participants, action.payload],
     }));
-    case 'REMOVE_PARTICIPANT': return updateActiveEvent(state, e => ({
-      ...e,
-      participants: e.participants.filter(p => p.id !== action.payload),
-      expenses: e.expenses.filter(ex => {
-        if (Array.isArray(ex.paidBy)) {
-          return ex.paidBy.some(py => py.userId !== action.payload);
-        }
-        return ex.paidBy !== action.payload;
-      }).map(ex => {
-        const remainingSplitIds = ex.splits
-          .filter(s => s.userId !== action.payload)
-          .map(s => s.userId);
-        // Equal splits: recompute so the surviving participants' shares add
-        // up to the expense total. Manual splits keep the user-entered
-        // amounts (the removed person's share is simply dropped).
-        const splits = ex.splitType === 'equal' && remainingSplitIds.length > 0
-          ? calculator.calculate(ex.amount, remainingSplitIds, 'equal')
-          : ex.splits.filter(s => s.userId !== action.payload);
-        return {
-          ...ex,
-          paidBy: Array.isArray(ex.paidBy)
-            ? ex.paidBy.filter(py => py.userId !== action.payload)
-            : ex.paidBy,
-          splits,
-        };
-      }),
-    }));
+    case 'REMOVE_PARTICIPANT': return updateActiveEvent(state, e => {
+      // Guard: do not remove a participant who has paid for any expense.
+      // Recomputing payer totals across expenses would be lossy and surprising.
+      if (hasPaidAnyExpense(action.payload, e.expenses)) return e;
+      return {
+        ...e,
+        participants: e.participants.filter(p => p.id !== action.payload),
+        expenses: e.expenses.map(ex => {
+          const remainingSplitIds = ex.splits
+            .filter(s => s.userId !== action.payload)
+            .map(s => s.userId);
+          // Equal splits: recompute so the surviving participants' shares add
+          // up to the expense total. Manual splits keep the user-entered
+          // amounts (the removed person's share is simply dropped).
+          const splits = ex.splitType === 'equal' && remainingSplitIds.length > 0
+            ? calculator.calculate(ex.amount, remainingSplitIds, 'equal')
+            : ex.splits.filter(s => s.userId !== action.payload);
+          return { ...ex, splits };
+        }),
+      };
+    });
     case 'ADD_EXPENSE': return updateActiveEvent(state, e => ({
       ...e, expenses: [...e.expenses, action.payload],
     }));

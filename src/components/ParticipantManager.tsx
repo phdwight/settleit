@@ -6,6 +6,7 @@ import { UserPlusIcon, XMarkIcon } from '@/components/icons';
 import { Accordion } from '@/components/Accordion';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { messages } from '@/lib/messages';
+import { hasPaidAnyExpense } from '@/lib/participantGuards';
 
 interface ParticipantManagerProps {
   open?: boolean;
@@ -26,25 +27,12 @@ export function ParticipantManager({ open, onToggle }: ParticipantManagerProps) 
 
   const pendingParticipant = participants.find(p => p.id === pendingRemoval) ?? null;
 
-  const impact = pendingParticipant
-    ? expenses.reduce(
-        (acc, ex) => {
-          const paidByThem = Array.isArray(ex.paidBy)
-            ? ex.paidBy.some(py => py.userId === pendingParticipant.id)
-            : ex.paidBy === pendingParticipant.id;
-          const owedByThem = ex.splits.some(s => s.userId === pendingParticipant.id);
-          const onlyPayer =
-            Array.isArray(ex.paidBy) &&
-            ex.paidBy.length === 1 &&
-            ex.paidBy[0].userId === pendingParticipant.id;
-          const nonPayer = !Array.isArray(ex.paidBy) && ex.paidBy === pendingParticipant.id;
-          if (onlyPayer || nonPayer) acc.deletedExpenses += 1;
-          else if (paidByThem || owedByThem) acc.modifiedExpenses += 1;
-          return acc;
-        },
-        { deletedExpenses: 0, modifiedExpenses: 0 }
-      )
-    : { deletedExpenses: 0, modifiedExpenses: 0 };
+  // Since payers can't be removed, "impact" reduces to: how many expenses
+  // include them in the split? Equal-split expenses will have remaining
+  // shares recomputed; manual splits will simply drop their entry.
+  const affectedExpenses = pendingParticipant
+    ? expenses.filter(ex => ex.splits.some(s => s.userId === pendingParticipant.id)).length
+    : 0;
 
   const confirmRemove = () => {
     if (pendingRemoval) removeParticipant(pendingRemoval);
@@ -73,19 +61,28 @@ export function ParticipantManager({ open, onToggle }: ParticipantManagerProps) 
         <p className="empty-state">No participants yet. Add someone to get started!</p>
       ) : (
         <ul className="space-y-2" role="list">
-          {participants.map(p => (
-            <li key={p.id} className="participant-chip">
-              <span className="participant-avatar">{p.name.charAt(0).toUpperCase()}</span>
-              <span className="flex-1 font-medium">{p.name}</span>
-              <button
-                onClick={() => setPendingRemoval(p.id)}
-                className="icon-btn text-red-500 hover:text-red-700"
-                aria-label={`Remove ${p.name}`}
-              >
-                <XMarkIcon className="w-4 h-4" />
-              </button>
-            </li>
-          ))}
+          {participants.map(p => {
+            const blocked = hasPaidAnyExpense(p.id, expenses);
+            return (
+              <li key={p.id} className="participant-chip">
+                <span className="participant-avatar">{p.name.charAt(0).toUpperCase()}</span>
+                <span className="flex-1 font-medium">{p.name}</span>
+                <button
+                  onClick={() => setPendingRemoval(p.id)}
+                  className="icon-btn text-red-500 hover:text-red-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-red-500"
+                  aria-label={
+                    blocked
+                      ? messages.participants.removeBlockedHint
+                      : `Remove ${p.name}`
+                  }
+                  title={blocked ? messages.participants.removeBlockedTooltip : undefined}
+                  disabled={blocked}
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
       <ConfirmDialog
@@ -95,14 +92,9 @@ export function ParticipantManager({ open, onToggle }: ParticipantManagerProps) 
         message={
           <>
             <p>{pendingParticipant && messages.participants.removeIntro(pendingParticipant.name)}</p>
-            {impact.deletedExpenses + impact.modifiedExpenses > 0 ? (
+            {affectedExpenses > 0 ? (
               <ul>
-                {impact.deletedExpenses > 0 && (
-                  <li>{messages.participants.removeDeletedExpenses(impact.deletedExpenses)}</li>
-                )}
-                {impact.modifiedExpenses > 0 && (
-                  <li>{messages.participants.removeModifiedExpenses(impact.modifiedExpenses)}</li>
-                )}
+                <li>{messages.participants.removeModifiedExpenses(affectedExpenses)}</li>
                 <li>{messages.participants.removeDebtsNote}</li>
               </ul>
             ) : (
