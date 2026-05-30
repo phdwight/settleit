@@ -30,22 +30,22 @@ export function Accordion({ title, headingId, defaultOpen = false, open: control
 
   return (
     <section aria-labelledby={headingId} className="accordion-section">
-      <button
-        type="button"
-        className="accordion-trigger"
-        onClick={toggle}
-        aria-expanded={open}
-        aria-controls={`${headingId}-panel`}
-      >
-        <h2 id={headingId} className="section-title" style={{ marginBottom: 0 }}>
-          {title}
-          {badge}
-        </h2>
-        <div className="flex items-center gap-2">
-          {headerRight}
+      <div className="accordion-header">
+        <button
+          type="button"
+          className="accordion-trigger"
+          onClick={toggle}
+          aria-expanded={open}
+          aria-controls={`${headingId}-panel`}
+        >
+          <h2 id={headingId} className="section-title" style={{ marginBottom: 0 }}>
+            {title}
+            {badge}
+          </h2>
           <ChevronDownIcon className={`accordion-chevron ${open ? 'open' : ''}`} />
-        </div>
-      </button>
+        </button>
+        {headerRight && <div className="accordion-header-right">{headerRight}</div>}
+      </div>
       <div
         id={`${headingId}-panel`}
         role="region"

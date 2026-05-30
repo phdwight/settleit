@@ -132,6 +132,67 @@ describe('AppContext reducer', () => {
       expect(next.events[0].expenses[0].splits).toHaveLength(1);
       expect(next.events[0].expenses[0].splits[0].userId).toBe('u1');
     });
+
+    it('recomputes equal splits so remaining shares add up to the total', () => {
+      // Three-way equal split of $30 → $10 each.
+      const expense: Expense = {
+        id: 'exp-1',
+        description: 'Pizza',
+        amount: 30,
+        paidBy: [{ userId: 'u1', amount: 30 }],
+        splitType: 'equal',
+        splits: [
+          { userId: 'u1', amount: 10 },
+          { userId: 'u2', amount: 10 },
+          { userId: 'u3', amount: 10 },
+        ],
+        createdAt: 2000,
+      };
+      const state: AppState = {
+        events: [makeEvent({
+          participants: [
+            { id: 'u1', name: 'Alice' },
+            { id: 'u2', name: 'Bob' },
+            { id: 'u3', name: 'Carol' },
+          ],
+          expenses: [expense],
+        })],
+        activeEventId: 'evt-1',
+      };
+      const next = reducer(state, { type: 'REMOVE_PARTICIPANT', payload: 'u3' });
+      const updated = next.events[0].expenses[0];
+      expect(updated.splits).toHaveLength(2);
+      const total = updated.splits.reduce((s, x) => s + x.amount, 0);
+      expect(Math.abs(total - updated.amount)).toBeLessThan(0.01);
+    });
+
+    it('leaves manual split amounts untouched for surviving participants', () => {
+      const expense: Expense = {
+        id: 'exp-1',
+        description: 'Dinner',
+        amount: 50,
+        paidBy: [{ userId: 'u1', amount: 50 }],
+        splitType: 'manual',
+        splits: [
+          { userId: 'u1', amount: 20 },
+          { userId: 'u2', amount: 30 },
+        ],
+        createdAt: 2000,
+      };
+      const state: AppState = {
+        events: [makeEvent({
+          participants: [
+            { id: 'u1', name: 'Alice' },
+            { id: 'u2', name: 'Bob' },
+          ],
+          expenses: [expense],
+        })],
+        activeEventId: 'evt-1',
+      };
+      const next = reducer(state, { type: 'REMOVE_PARTICIPANT', payload: 'u2' });
+      const updated = next.events[0].expenses[0];
+      expect(updated.splits).toEqual([{ userId: 'u1', amount: 20 }]);
+    });
   });
 
   describe('RESET', () => {

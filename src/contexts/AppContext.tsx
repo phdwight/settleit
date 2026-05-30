@@ -83,11 +83,24 @@ export function reducer(state: AppState, action: Action): AppState {
           return ex.paidBy.some(py => py.userId !== action.payload);
         }
         return ex.paidBy !== action.payload;
-      }).map(ex => ({
-        ...ex,
-        paidBy: Array.isArray(ex.paidBy) ? ex.paidBy.filter(py => py.userId !== action.payload) : ex.paidBy,
-        splits: ex.splits.filter(s => s.userId !== action.payload),
-      })),
+      }).map(ex => {
+        const remainingSplitIds = ex.splits
+          .filter(s => s.userId !== action.payload)
+          .map(s => s.userId);
+        // Equal splits: recompute so the surviving participants' shares add
+        // up to the expense total. Manual splits keep the user-entered
+        // amounts (the removed person's share is simply dropped).
+        const splits = ex.splitType === 'equal' && remainingSplitIds.length > 0
+          ? calculator.calculate(ex.amount, remainingSplitIds, 'equal')
+          : ex.splits.filter(s => s.userId !== action.payload);
+        return {
+          ...ex,
+          paidBy: Array.isArray(ex.paidBy)
+            ? ex.paidBy.filter(py => py.userId !== action.payload)
+            : ex.paidBy,
+          splits,
+        };
+      }),
     }));
     case 'ADD_EXPENSE': return updateActiveEvent(state, e => ({
       ...e, expenses: [...e.expenses, action.payload],

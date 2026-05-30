@@ -188,6 +188,24 @@ body {
   text-align: left;
 }
 
+.accordion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.accordion-header > .accordion-trigger {
+  flex: 1;
+  min-width: 0;
+}
+
+.accordion-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
 .accordion-chevron {
   width: 1.25rem;
   height: 1.25rem;
