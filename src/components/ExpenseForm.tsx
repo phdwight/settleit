@@ -2,13 +2,12 @@
 
 import { useState, useMemo, useRef } from 'react';
 import { useApp } from '@/contexts/AppContext';
-import type { SplitType } from '@/lib/types';
+import type { SplitType, Expense } from '@/lib/types';
 import { roundCents } from '@/lib/money';
-import { Accordion } from '@/components/Accordion';
 
 interface ExpenseFormProps {
-  open?: boolean;
-  onToggle?: (open: boolean) => void;
+  expense?: Expense;
+  onSubmitted?: () => void;
 }
 
 function downscaleImage(file: File, maxDim: number, quality: number): Promise<string> {
@@ -36,15 +35,24 @@ function downscaleImage(file: File, maxDim: number, quality: number): Promise<st
   });
 }
 
-export function ExpenseForm({ open, onToggle }: ExpenseFormProps) {
-  const { participants, addExpense } = useApp();
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [payers, setPayers] = useState<Record<string, string>>({}); // userId -> amount string
-  const [splitType, setSplitType] = useState<SplitType>('equal');
-  const [manualAmounts, setManualAmounts] = useState<Record<string, string>>({});
-  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
-  const [receiptImage, setReceiptImage] = useState<string | undefined>();
+export function ExpenseForm({ expense, onSubmitted }: ExpenseFormProps) {
+  const { participants, addExpense, updateExpense } = useApp();
+  const isEditing = expense !== undefined;
+  const [description, setDescription] = useState(expense?.description ?? '');
+  const [amount, setAmount] = useState(expense ? String(expense.amount) : '');
+  const [payers, setPayers] = useState<Record<string, string>>(() =>
+    expense ? Object.fromEntries(expense.paidBy.map(p => [p.userId, String(p.amount)])) : {}
+  ); // userId -> amount string
+  const [splitType, setSplitType] = useState<SplitType>(expense?.splitType ?? 'equal');
+  const [manualAmounts, setManualAmounts] = useState<Record<string, string>>(() =>
+    expense && expense.splitType === 'manual'
+      ? Object.fromEntries(expense.splits.map(s => [s.userId, String(s.amount)]))
+      : {}
+  );
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>(() =>
+    expense ? expense.splits.map(s => s.userId) : []
+  );
+  const [receiptImage, setReceiptImage] = useState<string | undefined>(expense?.receiptImage);
   const [error, setError] = useState('');
   const [manualError, setManualError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -180,23 +188,25 @@ export function ExpenseForm({ open, onToggle }: ExpenseFormProps) {
     }
     setManualError('');
 
-    addExpense({ description, amount: amt, paidBy: payerDetails, splitType, manualAmounts: manualMap, participantIds: ids, receiptImage });
+    if (isEditing) {
+      updateExpense(expense.id, { description, amount: amt, paidBy: payerDetails, splitType, manualAmounts: manualMap, participantIds: ids, receiptImage });
+    } else {
+      addExpense({ description, amount: amt, paidBy: payerDetails, splitType, manualAmounts: manualMap, participantIds: ids, receiptImage });
+    }
     setDescription(''); setAmount(''); setPayers({}); setSplitType('equal');
     setManualAmounts({}); setSelectedParticipants([]); setReceiptImage(undefined);
     if (fileInputRef.current) fileInputRef.current.value = '';
+    onSubmitted?.();
   };
 
   if (participants.length === 0) {
     return (
-      <Accordion title="Add Expense" headingId="expense-heading" open={open} onToggle={onToggle}>
-        <p className="empty-state">Add at least one participant before adding expenses.</p>
-      </Accordion>
+      <p className="empty-state">Add at least one participant before adding expenses.</p>
     );
   }
 
   return (
-    <Accordion title="Add Expense" headingId="expense-heading">
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {error && <p role="alert" className="error-msg">{error}</p>}
         <div className="form-group">
           <label htmlFor="description" className="label">Description</label>
@@ -353,8 +363,7 @@ export function ExpenseForm({ open, onToggle }: ExpenseFormProps) {
             </div>
           )}
         </div>
-        <button type="submit" className="btn btn-primary w-full">Add Expense</button>
+        <button type="submit" className="btn btn-primary w-full">{isEditing ? 'Save changes' : 'Add Expense'}</button>
       </form>
-    </Accordion>
   );
 }

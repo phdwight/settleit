@@ -26,8 +26,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#4f46e5' },
-    { media: '(prefers-color-scheme: dark)', color: '#6366f1' },
+    { media: '(prefers-color-scheme: light)', color: '#c0392b' },
+    { media: '(prefers-color-scheme: dark)', color: '#e05549' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -42,12 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ServiceWorkerRegistration />
             <InstallPrompt />
             <Header />
-            <main id="main-content" tabIndex={-1}>
+            <main id="main-content" className="app-main" tabIndex={-1}>
               {children}
             </main>
-            <footer className="text-center text-[10px] text-[var(--muted)] py-3">
-              v{process.env.NEXT_PUBLIC_BUILD_VERSION}
-            </footer>
           </AppProvider>
         </ThemeProvider>
       </body>

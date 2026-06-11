@@ -3,17 +3,11 @@
 import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { UserPlusIcon, XMarkIcon } from '@/components/icons';
-import { Accordion } from '@/components/Accordion';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { messages } from '@/lib/messages';
 import { hasPaidAnyExpense } from '@/lib/participantGuards';
 
-interface ParticipantManagerProps {
-  open?: boolean;
-  onToggle?: (open: boolean) => void;
-}
-
-export function ParticipantManager({ open, onToggle }: ParticipantManagerProps) {
+export function ParticipantManager() {
   const { participants, expenses, addParticipant, removeParticipant } = useApp();
   const [name, setName] = useState('');
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
@@ -40,7 +34,11 @@ export function ParticipantManager({ open, onToggle }: ParticipantManagerProps) 
   };
 
   return (
-    <Accordion title="Participants" headingId="participants-heading" open={open} onToggle={onToggle} badge={participants.length > 0 ? <span className="badge ml-2">{participants.length}</span> : undefined}>
+    <section className="card" aria-labelledby="participants-heading">
+      <h2 id="participants-heading" className="section-title">
+        Participants
+        {participants.length > 0 && <span className="badge ml-2">{participants.length}</span>}
+      </h2>
       <div className="flex gap-2 mb-4">
         <input
           type="text"
@@ -105,6 +103,6 @@ export function ParticipantManager({ open, onToggle }: ParticipantManagerProps) 
         onConfirm={confirmRemove}
         onCancel={() => setPendingRemoval(null)}
       />
-    </Accordion>
+    </section>
   );
 }
