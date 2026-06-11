@@ -2,17 +2,16 @@
 
 import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
-import { TrashIcon } from '@/components/icons';
-import { Accordion } from '@/components/Accordion';
+import { TrashIcon, PencilIcon } from '@/components/icons';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { messages } from '@/lib/messages';
+import type { Expense } from '@/lib/types';
 
 interface ExpenseListProps {
-  open?: boolean;
-  onToggle?: (open: boolean) => void;
+  onEdit?: (expense: Expense) => void;
 }
 
-export function ExpenseList({ open, onToggle }: ExpenseListProps) {
+export function ExpenseList({ onEdit }: ExpenseListProps) {
   const { expenses, participants, removeExpense } = useApp();
   const [viewingReceipt, setViewingReceipt] = useState<string | null>(null);
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
@@ -34,14 +33,19 @@ export function ExpenseList({ open, onToggle }: ExpenseListProps) {
 
   if (expenses.length === 0) {
     return (
-      <Accordion title="Expenses" headingId="expenses-heading" open={open} onToggle={onToggle}>
+      <section className="card" aria-labelledby="expenses-heading">
+        <h2 id="expenses-heading" className="section-title">Expenses</h2>
         <p className="empty-state">No expenses yet.</p>
-      </Accordion>
+      </section>
     );
   }
 
   return (
-    <Accordion title="Expenses" headingId="expenses-heading" open={open} onToggle={onToggle} badge={<span className="badge ml-2">{expenses.length}</span>}>
+    <section className="card" aria-labelledby="expenses-heading">
+      <h2 id="expenses-heading" className="section-title">
+        Expenses
+        <span className="badge ml-2">{expenses.length}</span>
+      </h2>
       <ul className="space-y-3" role="list">
         {[...expenses].reverse().map(expense => (
           <li key={expense.id} className="expense-item">
@@ -54,6 +58,10 @@ export function ExpenseList({ open, onToggle }: ExpenseListProps) {
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <span className="amount-display">{expense.amount.toFixed(2)}</span>
+                <button onClick={() => onEdit?.(expense)} className="icon-btn text-[var(--muted)] hover:text-[var(--primary)]"
+                  aria-label={`Edit expense: ${expense.description}`}>
+                  <PencilIcon className="w-3.5 h-3.5" />
+                </button>
                 <button onClick={() => setPendingRemoval(expense.id)} className="icon-btn text-red-500 hover:text-red-700"
                   aria-label={`Remove expense: ${expense.description}`}>
                   <TrashIcon className="w-3.5 h-3.5" />
@@ -94,6 +102,6 @@ export function ExpenseList({ open, onToggle }: ExpenseListProps) {
         onConfirm={confirmRemove}
         onCancel={() => setPendingRemoval(null)}
       />
-    </Accordion>
+    </section>
   );
 }

@@ -1,33 +1,84 @@
 'use client';
 
+import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
-import { usePanelState } from '@/hooks/usePanelState';
 import { EventManager } from '@/components/EventManager';
 import { ParticipantManager } from '@/components/ParticipantManager';
 import { ExpenseForm } from '@/components/ExpenseForm';
 import { ExpenseList } from '@/components/ExpenseList';
 import { DebtSummary } from '@/components/DebtSummary';
+import { MoreMenu } from '@/components/MoreMenu';
+import { NewEventForm } from '@/components/NewEventForm';
+import { BottomNav, type NavTab } from '@/components/BottomNav';
+import { Sheet } from '@/components/Sheet';
+import type { Expense } from '@/lib/types';
 
 export default function Home() {
-  const { activeEvent, goBack } = useApp();
-  const { panels, toggle } = usePanelState(activeEvent?.id ?? null);
+  const { activeEvent } = useApp();
+  const [tab, setTab] = useState<NavTab>('summary');
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
+  // No active event: show the events list. The FAB creates a new event.
   if (!activeEvent) {
-    return <EventManager />;
+    return (
+      <>
+        <EventManager />
+        <BottomNav
+          active="summary"
+          onSelect={() => {}}
+          onAdd={() => setSheetOpen(true)}
+          addLabel="New event"
+        />
+        <Sheet open={sheetOpen} title="New event" onClose={() => setSheetOpen(false)}>
+          <NewEventForm onSubmitted={() => setSheetOpen(false)} />
+        </Sheet>
+      </>
+    );
   }
 
+  const openAdd = () => {
+    setEditingExpense(null);
+    setSheetOpen(true);
+  };
+
+  const openEdit = (expense: Expense) => {
+    setEditingExpense(expense);
+    setSheetOpen(true);
+  };
+
+  const closeSheet = () => {
+    setSheetOpen(false);
+    setEditingExpense(null);
+  };
+
   return (
-    <div className="container mx-auto px-4 py-6 max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={goBack} className="btn btn-ghost btn-sm">← Events</button>
-        <h2 className="text-lg font-semibold truncate">{activeEvent.name}</h2>
+    <>
+      <div className="container mx-auto px-4 py-6 max-w-2xl page">
+        <div className="page-heading">
+          <h1 className="page-title">{activeEvent.name}</h1>
+        </div>
+
+        {tab === 'summary' && <DebtSummary />}
+        {tab === 'expenses' && <ExpenseList onEdit={openEdit} />}
+        {tab === 'people' && <ParticipantManager />}
+        {tab === 'more' && <MoreMenu />}
       </div>
-      <div className="accordion-group">
-        <ParticipantManager open={panels.participants} onToggle={toggle('participants')} />
-        <ExpenseForm open={panels.expense} onToggle={toggle('expense')} />
-        <DebtSummary open={panels.summary} onToggle={toggle('summary')} />
-        <ExpenseList open={panels.expenses} onToggle={toggle('expenses')} />
-      </div>
-    </div>
+
+      <BottomNav
+        active={tab}
+        onSelect={setTab}
+        onAdd={openAdd}
+        addLabel="Add expense"
+      />
+
+      <Sheet
+        open={sheetOpen}
+        title={editingExpense ? 'Edit expense' : 'Add expense'}
+        onClose={closeSheet}
+      >
+        <ExpenseForm key={editingExpense?.id ?? 'new'} expense={editingExpense ?? undefined} onSubmitted={closeSheet} />
+      </Sheet>
+    </>
   );
 }

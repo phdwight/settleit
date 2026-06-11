@@ -34,6 +34,15 @@ interface AppContextValue {
     participantIds: string[];
     receiptImage?: string;
   }) => void;
+  updateExpense: (id: string, params: {
+    description: string;
+    amount: number;
+    paidBy: PayerDetail[];
+    splitType: SplitType;
+    manualAmounts?: Record<string, number>;
+    participantIds: string[];
+    receiptImage?: string;
+  }) => void;
   removeExpense: (id: string) => void;
   debts: ReturnType<DebtSimplifier['simplify']>;
   reset: () => void;
@@ -48,6 +57,7 @@ type Action =
   | { type: 'ADD_PARTICIPANT'; payload: User }
   | { type: 'REMOVE_PARTICIPANT'; payload: string }
   | { type: 'ADD_EXPENSE'; payload: Expense }
+  | { type: 'UPDATE_EXPENSE'; payload: { id: string; changes: Partial<Expense> } }
   | { type: 'REMOVE_EXPENSE'; payload: string }
   | { type: 'RESET' };
 
@@ -99,6 +109,9 @@ export function reducer(state: AppState, action: Action): AppState {
     });
     case 'ADD_EXPENSE': return updateActiveEvent(state, e => ({
       ...e, expenses: [...e.expenses, action.payload],
+    }));
+    case 'UPDATE_EXPENSE': return updateActiveEvent(state, e => ({
+      ...e, expenses: e.expenses.map(ex => ex.id === action.payload.id ? { ...ex, ...action.payload.changes } : ex),
     }));
     case 'REMOVE_EXPENSE': return updateActiveEvent(state, e => ({
       ...e, expenses: e.expenses.filter(ex => ex.id !== action.payload),
@@ -193,6 +206,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'ADD_EXPENSE', payload: expense });
   }, []);
 
+  const updateExpense = useCallback((id: string, params: {
+    description: string;
+    amount: number;
+    paidBy: PayerDetail[];
+    splitType: SplitType;
+    manualAmounts?: Record<string, number>;
+    participantIds: string[];
+    receiptImage?: string;
+  }) => {
+    const splits = calculator.calculate(
+      params.amount,
+      params.participantIds,
+      params.splitType,
+      params.manualAmounts
+    );
+    dispatch({
+      type: 'UPDATE_EXPENSE',
+      payload: {
+        id,
+        changes: {
+          description: params.description,
+          amount: params.amount,
+          paidBy: params.paidBy,
+          splitType: params.splitType,
+          splits,
+          receiptImage: params.receiptImage,
+        },
+      },
+    });
+  }, []);
+
   const removeExpense = useCallback((id: string) => {
     dispatch({ type: 'REMOVE_EXPENSE', payload: id });
   }, []);
@@ -232,6 +276,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addParticipant,
       removeParticipant,
       addExpense,
+      updateExpense,
       removeExpense,
       debts,
       reset,

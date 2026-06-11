@@ -3,16 +3,10 @@
 import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { ArrowRightIcon, CheckCircleIcon } from '@/components/icons';
-import { Accordion } from '@/components/Accordion';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { messages } from '@/lib/messages';
 
-interface DebtSummaryProps {
-  open?: boolean;
-  onToggle?: (open: boolean) => void;
-}
-
-export function DebtSummary({ open, onToggle }: DebtSummaryProps) {
+export function DebtSummary() {
   const { debts, participants, expenses, reset } = useApp();
   const [confirmingReset, setConfirmingReset] = useState(false);
 
@@ -22,7 +16,7 @@ export function DebtSummary({ open, onToggle }: DebtSummaryProps) {
 
   const resetButton = (participants.length > 0 || expenses.length > 0) ? (
     <button
-      onClick={(e) => { e.stopPropagation(); setConfirmingReset(true); }}
+      onClick={() => setConfirmingReset(true)}
       className="btn btn-sm btn-ghost"
       aria-label="Reset all data"
     >
@@ -36,7 +30,11 @@ export function DebtSummary({ open, onToggle }: DebtSummaryProps) {
   };
 
   return (
-    <Accordion title="Settlement Summary" headingId="summary-heading" open={open} onToggle={onToggle} headerRight={resetButton}>
+    <section className="card" aria-labelledby="summary-heading">
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <h2 id="summary-heading" className="section-title" style={{ marginBottom: 0 }}>Settlement Summary</h2>
+        {resetButton}
+      </div>
       {expenses.length > 0 && (
         <div className="totals-bar mb-4">
           <div className="total-item">
@@ -81,6 +79,6 @@ export function DebtSummary({ open, onToggle }: DebtSummaryProps) {
         onConfirm={handleReset}
         onCancel={() => setConfirmingReset(false)}
       />
-    </Accordion>
+    </section>
   );
 }
