@@ -3,13 +3,16 @@
 import { useRef } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { Sheet } from '@/components/Sheet';
+import { NewEventForm } from '@/components/NewEventForm';
 import { useState } from 'react';
-import { DownloadIcon, UploadIcon, TrashIcon, ArrowLeftIcon } from '@/components/icons';
+import { DownloadIcon, UploadIcon, TrashIcon, ArrowLeftIcon, PlusIcon } from '@/components/icons';
 
 export function MoreMenu() {
   const { exportEvent, importEvent, goBack } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
+  const [creatingEvent, setCreatingEvent] = useState(false);
 
   const clearStorage = async () => {
     localStorage.clear();
@@ -37,6 +40,10 @@ export function MoreMenu() {
     <section className="card" aria-labelledby="more-heading">
       <h2 id="more-heading" className="section-title">More</h2>
       <div className="space-y-2">
+        <button onClick={() => setCreatingEvent(true)} className="more-row">
+          <PlusIcon className="w-5 h-5" />
+          <span>New event</span>
+        </button>
         <button onClick={goBack} className="more-row">
           <ArrowLeftIcon className="w-5 h-5" />
           <span>Switch event</span>
@@ -68,6 +75,10 @@ export function MoreMenu() {
         onConfirm={clearStorage}
         onCancel={() => setConfirmingClear(false)}
       />
+
+      <Sheet open={creatingEvent} title="New event" onClose={() => setCreatingEvent(false)}>
+        <NewEventForm onSubmitted={() => setCreatingEvent(false)} />
+      </Sheet>
     </section>
   );
 }
