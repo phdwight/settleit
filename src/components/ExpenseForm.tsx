@@ -352,7 +352,7 @@ export function ExpenseForm({ expense, onSubmitted }: ExpenseFormProps) {
         )}
         <div className="form-group">
           <label htmlFor="receipt" className="label">Receipt (optional)</label>
-          <input id="receipt" ref={fileInputRef} type="file" accept="image/*" capture="environment"
+          <input id="receipt" ref={fileInputRef} type="file" accept="image/*"
             onChange={handleReceiptChange} className="input text-sm" />
           {receiptImage && (
             <div className="mt-2 relative inline-block">
