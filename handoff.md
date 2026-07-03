@@ -166,9 +166,11 @@ These are choices that may not be obvious from the code alone.
 - Path alias `@/*` → `src/*` is configured in both `tsconfig.json` and `jest.config.ts`.
 
 ### Build / scripts
-- `npm run dev` — Next dev server
-- `npm run build` / `npm start` — production
-- `npm test` — Jest (currently 10 suites / 67 tests)
+- `npm run dev` — Next dev server on port 3000. Change the port with
+  `npm run dev -- -p 4000` or `PORT=4000 npm run dev`.
+- `npm run build` / `npm start` — production (static export to `./out`)
+- `npm test` — Jest (currently 13 suites / 106 tests). Add `--coverage`
+  for a report, `--watch` while developing, or a name to scope a suite.
 - `npm run lint` — ESLint flat config
 
 ### Pitfalls to watch
@@ -235,18 +237,37 @@ the codebase — deviating from it is a regression.
 
 The repo-level [implementationDiscipline](.) guidance applies here:
 
+- Do the simplest thing that works well. Don't add features, refactor,
+  or introduce abstractions beyond what the task needs, and don't design
+  for hypothetical future requirements. Smallest viable diff wins;
+  reuse beats abstraction. No premature abstraction, no half-finished
+  implementations.
 - Don't add abstractions for things that have one caller. Wait for the
-  second use case before extracting.
-- Don't add config knobs, plugin systems, or feature flags
-  speculatively.
+  second use case before extracting. A one-shot operation usually
+  doesn't need a helper.
+- A bug fix doesn't need surrounding cleanup. No drive-by renames,
+  refactors, or tidying of unrelated code — open a separate change.
+- Don't add config knobs, plugin systems, feature flags, or
+  backwards-compatibility shims speculatively. If you can just change
+  the code, change it.
 - Don't introduce new dependencies for problems the standard library or
   existing modules already solve. Prefer 20 lines of local code over a
   new package.
-- Don't add error handling for impossible states. Validate at the
-  system boundary (file import, localStorage parse) and trust the
-  domain types elsewhere.
-- Don't refactor unrelated code "while you're there." Open a separate
-  change.
+- **Validate only at system boundaries; trust internal code and
+  framework guarantees elsewhere.** This repo's boundaries are:
+  localStorage read/parse ([`StorageService`](src/lib/StorageService.ts)),
+  JSON import ([`EventExportService`](src/lib/EventExportService.ts)),
+  user input intake ([`ExpenseForm`](src/components/ExpenseForm.tsx),
+  [`ParticipantManager`](src/components/ParticipantManager.tsx),
+  [`NewEventForm`](src/components/NewEventForm.tsx)), and receipt image
+  capture. Don't add error handling for impossible states between them.
+- The **graceful-degradation code already at those boundaries is
+  deliberate.** `StorageService`'s `typeof window` SSR guards, its
+  silent quota-exceeded failure, and its legacy-data migration, plus the
+  legacy single-payer (`paidBy: string`) tolerance in the reducer's
+  `REMOVE_PARTICIPANT` branch and in `DebtSimplifier`, all guard real
+  boundary cases. Don't strip them citing "no error handling for
+  impossible states."
 - Don't add docstrings/comments to code you didn't change.
 
 ### Tests — what to add, where
@@ -318,6 +339,99 @@ Every user-visible change must remain i18n-ready:
       changed.
 - [ ] No new top-level dependencies added without a clear justification.
 - [ ] Service worker `CACHE_NAME` bumped if the shell changed.
+
+---
+
+## 5. Agent behavior rules
+
+These are **binding rules** for any AI coding agent working in this repo.
+They govern how you work, not what the code does. The digest in
+[AGENTS.md](AGENTS.md) links here; read both, plus
+[lessons/README.md](lessons/README.md), before starting. Rule 1
+(anti over-engineering) lives in section 4's
+[Avoiding over-engineering](#avoiding-over-engineering) — its natural home.
+
+### Communication & reporting
+
+- **Lead with the outcome.** The first sentence after finishing answers
+  "what happened" or "what did you find" — the TLDR the user would
+  otherwise have to ask for. Supporting detail and reasoning come after.
+  Readability matters more than raw brevity.
+- **Be selective, not compressed.** Keep output short by dropping detail
+  that wouldn't change what the reader does next — never by compressing
+  into fragments, abbreviations, arrow chains (`A → B → fails`), or
+  jargon.
+- **Audit every claim against evidence before reporting.** Each progress
+  claim must trace to a tool result from this session (a `npm test` run,
+  a file read, a command's output). Report only work you can point to,
+  and say explicitly when something is not yet verified.
+- **Report outcomes faithfully.** Tests fail → say so and include the
+  output. A step was skipped → say that. Done and verified → state it
+  plainly, without hedging.
+- **Terse shorthand between tool calls is fine; the final summary is
+  not.** Write the final summary for a reader who saw none of the work:
+  complete sentences, spelled-out terms, no labels you coined while
+  working, each file / commit / flag in its own plain-language clause.
+  If you must choose between short and clear, choose clear.
+- **After a long unwatched stretch, the final message re-grounds the
+  reader** rather than continuing: outcome first, then the one or two
+  things you need from them, each explained as if new.
+
+### Assessment vs. action
+
+- When the user is describing a problem, asking a question, or thinking
+  out loud rather than requesting a change, the deliverable is your
+  **assessment** — report findings and stop. Don't apply a fix until
+  they ask for one.
+- Before running a command that changes system state (clearing
+  localStorage / caches or unregistering the service worker in a debug
+  session, rewriting git history, editing config, restarting the dev
+  server), confirm the evidence supports *that specific action*. A
+  symptom that pattern-matches a known failure may have a different
+  cause here.
+
+### Autonomous operation
+
+- Assume the user is not watching in real time and cannot answer
+  mid-task; asking "Want me to…?" / "Shall I…?" blocks the work. For
+  **reversible** actions that follow from the request — editing files,
+  adding tests, running `npm test` / `npm run lint` — proceed without
+  asking.
+- **Pausing is still required** for destructive or irreversible actions,
+  real scope changes, and input only the user can provide (the
+  state-changing commands listed under *Assessment vs. action*). This
+  does not contradict "proceed without asking": reversible, in-scope
+  work proceeds; irreversible or out-of-scope work pauses.
+- Offering follow-ups after the task is done is fine; re-asking
+  permission for work already agreed before starting is not.
+- **Before ending your turn, re-read your last paragraph.** If it is a
+  plan, an analysis, a question, a list of next steps, or a promise
+  about undone work ("I'll…", "let me know when…"), do that work now
+  with tool calls. End the turn only when the task is complete or you
+  are blocked on input only the user can provide.
+- Never stop, summarize, or suggest a new session on account of context
+  limits.
+
+### Delegation
+
+- Delegate independent subtasks to subagents and keep working while they
+  run. Intervene if one drifts off track or lacks context, and verify a
+  subagent's output before building on it.
+- Brief each subagent with the context it can't infer — the larger task,
+  who it's for, and what its output enables — then the request: *"I'm
+  working on &lt;the larger task&gt; for &lt;who it's for&gt;. They need
+  &lt;what the output enables&gt;. With that in mind: &lt;request&gt;."*
+
+### Lessons store
+
+- Accumulated corrections and confirmed approaches live in
+  [lessons/](lessons/); [lessons/README.md](lessons/README.md) states
+  the contract. Read it at the start of every session.
+- **One lesson per file, one-line summary at the top.** Record both
+  corrections and confirmed approaches, including *why* they mattered.
+  Don't save what this file, `README.md`, or chat history already
+  records; update an existing note rather than duplicating; delete notes
+  that turn out to be wrong (edit in place, never append-only).
 
 ---
 
