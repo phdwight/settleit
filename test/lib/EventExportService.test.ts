@@ -7,6 +7,7 @@ const mockEvent: Event = {
   createdAt: 1000,
   participants: [{ id: 'u1', name: 'Alice' }],
   expenses: [],
+  payments: [],
 };
 
 function makeFile(content: string): File {

@@ -38,9 +38,9 @@ works offline as an installable PWA.
 
 ## Screenshots
 
-| Events | Add expense | Debt summary |
-| --- | --- | --- |
-| ![Events list](docs/screenshots/events.png) | ![Add expense](docs/screenshots/add-expense.png) | ![Debt summary](docs/screenshots/summary.png) |
+| Events | Add expense | Debt summary | Settle up |
+| --- | --- | --- | --- |
+| ![Events list](docs/screenshots/events.png) | ![Add expense](docs/screenshots/add-expense.png) | ![Debt summary](docs/screenshots/summary.png) | ![Recording a settlement](docs/screenshots/settle.png) |
 
 ## Features
 
@@ -52,6 +52,9 @@ works offline as an installable PWA.
   per-person amounts.
 - **Debt simplification** — nets everyone's balances and emits the smallest
   practical number of payback transactions instead of a web of IOUs.
+- **Record settlements** — when someone pays their share back, tap **Settle
+  up** on a debt to log the payment (full or partial); it nets against the
+  balances instead of being added as another expense.
 - **Receipt attachments** — attach an optional (downscaled) receipt image to
   any expense; it travels with the exported data.
 - **Export / import** — back up or share an event as a self-contained JSON

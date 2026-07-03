@@ -489,17 +489,35 @@ select.input {
 .debt-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
   padding: 0.875rem 1rem;
   background-color: var(--surface-elevated);
   border: 1px solid var(--border);
   border-radius: calc(var(--radius) - 0.25rem);
 }
 
+.debt-parties {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.debt-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .debt-name {
   font-weight: 600;
   font-size: 0.9375rem;
-  max-width: 8rem;
+  flex-shrink: 0;
+  max-width: 7rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -512,6 +530,8 @@ select.input {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* =========================================

@@ -145,6 +145,13 @@ These are choices that may not be obvious from the code alone.
 ### Domain model
 - **`paidBy` is an array** of `{ userId, amount }` to support multi-payer expenses. Legacy single-payer (`paidBy: string`) is still tolerated in the reducer's `REMOVE_PARTICIPANT` branch and in `DebtSimplifier` — preserve that compatibility when refactoring.
 - **`splits` are precomputed** at expense creation time. If you mutate participants later, the reducer rewrites affected expenses; debts are recomputed live in the provider via `simplifier.simplify(expenses, participants)`.
+- **Settlements are separate from expenses.** Each `Event` has a
+  `payments: Payment[]` (`{ from, to, amount }`); `DebtSimplifier.simplify`
+  takes a third `payments` argument and nets them in (payer's balance up,
+  payee's down) so recording a payback reduces the outstanding debt without
+  inflating **Total Spent**. Record one via the **Settle up** action on a debt
+  row in [`DebtSummary`](src/components/DebtSummary.tsx); `REMOVE_PARTICIPANT`
+  also drops payments referencing the removed person.
 - **Money is treated as cents internally for rounding** via the [`roundCents`](src/lib/money.ts) helper and the `MONEY_EPSILON` constant (0.005). Anything monetary should use these — do not inline `Math.round(x * 100) / 100`.
 
 ### UX

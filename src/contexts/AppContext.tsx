@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
-import type { AppState, Event, User, Expense, SplitType, PayerDetail } from '@/lib/types';
+import type { AppState, Event, User, Expense, SplitType, PayerDetail, Payment } from '@/lib/types';
 import { StorageService } from '@/lib/StorageService';
 import { SplitCalculator } from '@/lib/SplitCalculator';
 import { DebtSimplifier } from '@/lib/DebtSimplifier';
@@ -44,6 +44,9 @@ interface AppContextValue {
     receiptImage?: string;
   }) => void;
   removeExpense: (id: string) => void;
+  payments: Payment[];
+  addPayment: (from: string, to: string, amount: number, note?: string) => void;
+  removePayment: (id: string) => void;
   debts: ReturnType<DebtSimplifier['simplify']>;
   reset: () => void;
 }
@@ -59,6 +62,8 @@ type Action =
   | { type: 'ADD_EXPENSE'; payload: Expense }
   | { type: 'UPDATE_EXPENSE'; payload: { id: string; changes: Partial<Expense> } }
   | { type: 'REMOVE_EXPENSE'; payload: string }
+  | { type: 'ADD_PAYMENT'; payload: Payment }
+  | { type: 'REMOVE_PAYMENT'; payload: string }
   | { type: 'RESET' };
 
 export type { Action as AppAction };
@@ -93,6 +98,7 @@ export function reducer(state: AppState, action: Action): AppState {
       return {
         ...e,
         participants: e.participants.filter(p => p.id !== action.payload),
+        payments: (e.payments ?? []).filter(p => p.from !== action.payload && p.to !== action.payload),
         expenses: e.expenses.map(ex => {
           const remainingSplitIds = ex.splits
             .filter(s => s.userId !== action.payload)
@@ -116,8 +122,14 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'REMOVE_EXPENSE': return updateActiveEvent(state, e => ({
       ...e, expenses: e.expenses.filter(ex => ex.id !== action.payload),
     }));
+    case 'ADD_PAYMENT': return updateActiveEvent(state, e => ({
+      ...e, payments: [...(e.payments ?? []), action.payload],
+    }));
+    case 'REMOVE_PAYMENT': return updateActiveEvent(state, e => ({
+      ...e, payments: (e.payments ?? []).filter(p => p.id !== action.payload),
+    }));
     case 'RESET': return updateActiveEvent(state, e => ({
-      ...e, participants: [], expenses: [],
+      ...e, participants: [], expenses: [], payments: [],
     }));
     default: return state;
   }
@@ -153,6 +165,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createdAt: Date.now(),
       participants: [],
       expenses: [],
+      payments: [],
     };
     dispatch({ type: 'CREATE_EVENT', payload: event });
   }, []);
@@ -241,6 +254,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'REMOVE_EXPENSE', payload: id });
   }, []);
 
+  const addPayment = useCallback((from: string, to: string, amount: number, note?: string) => {
+    const payment: Payment = { id: generateId(), from, to, amount, note, createdAt: Date.now() };
+    dispatch({ type: 'ADD_PAYMENT', payload: payment });
+  }, []);
+
+  const removePayment = useCallback((id: string) => {
+    dispatch({ type: 'REMOVE_PAYMENT', payload: id });
+  }, []);
+
   const reset = useCallback(() => {
     dispatch({ type: 'RESET' });
   }, []);
@@ -258,7 +280,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const participants = activeEvent?.participants ?? [];
   const expenses = activeEvent?.expenses ?? [];
-  const debts = simplifier.simplify(expenses, participants);
+  const payments = activeEvent?.payments ?? [];
+  const debts = simplifier.simplify(expenses, participants, payments);
 
   return (
     <AppContext.Provider value={{
@@ -278,6 +301,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addExpense,
       updateExpense,
       removeExpense,
+      payments,
+      addPayment,
+      removePayment,
       debts,
       reset,
     }}>
