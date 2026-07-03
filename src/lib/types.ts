@@ -32,12 +32,22 @@ export interface Debt {
   amount: number;
 }
 
+export interface Payment {
+  id: string;
+  from: string; // userId who paid the money
+  to: string;   // userId who received the money
+  amount: number;
+  note?: string;
+  createdAt: number;
+}
+
 export interface Event {
   id: string;
   name: string;
   createdAt: number;
   participants: User[];
   expenses: Expense[];
+  payments: Payment[]; // recorded settlements between participants
 }
 
 export interface AppState {

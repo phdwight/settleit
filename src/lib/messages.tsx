@@ -79,4 +79,23 @@ export const messages = {
       </>
     ),
   },
+
+  settlements: {
+    heading: 'Payments',
+    empty: 'No payments recorded yet.',
+    settleUp: 'Settle up',
+    recordTitle: 'Record a payment',
+    amountLabel: 'Amount',
+    noteLabel: 'Note (optional)',
+    notePlaceholder: 'e.g. cash, GCash',
+    save: 'Record payment',
+    deleteTitle: 'Delete this payment?',
+    deleteConfirm: 'Delete payment',
+    deleteBody: (from: string, to: string, amount: string) => (
+      <>
+        This removes the recorded payment of <strong>{amount}</strong> from{' '}
+        {from} to {to}. Remaining balances will be recalculated.
+      </>
+    ),
+  },
 } as const;

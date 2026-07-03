@@ -101,4 +101,20 @@ describe('messages', () => {
       expect(container.textContent).toContain('3 expenses');
     });
   });
+
+  describe('settlements', () => {
+    it('exposes settlement labels', () => {
+      expect(messages.settlements.settleUp).toBe('Settle up');
+      expect(messages.settlements.recordTitle).toBe('Record a payment');
+    });
+
+    it('renders the delete body with names and amount', () => {
+      const { container } = render(
+        <>{messages.settlements.deleteBody('Bob', 'Alice', '15.00')}</>
+      );
+      expect(container.textContent).toContain('Bob');
+      expect(container.textContent).toContain('Alice');
+      expect(container.textContent).toContain('15.00');
+    });
+  });
 });

@@ -1,5 +1,5 @@
 import { DebtSimplifier } from '@/lib/DebtSimplifier';
-import type { Expense, User } from '@/lib/types';
+import type { Expense, User, Payment } from '@/lib/types';
 
 describe('DebtSimplifier', () => {
   const simplifier = new DebtSimplifier();
@@ -136,6 +136,32 @@ describe('DebtSimplifier', () => {
     // alice net: +60-30=+30, bob net: +30-30=0, charlie net: -30
     expect(debts).toEqual([
       { from: 'charlie', to: 'alice', amount: 30 },
+    ]);
+  });
+
+  it('a full settlement payment clears the debt', () => {
+    const expenses: Expense[] = [{
+      id: '1', description: 'Dinner', amount: 100,
+      paidBy: [{ userId: 'alice', amount: 100 }],
+      splitType: 'equal',
+      splits: [{ userId: 'alice', amount: 50 }, { userId: 'bob', amount: 50 }],
+      createdAt: 1,
+    }];
+    const payments: Payment[] = [{ id: 'p1', from: 'bob', to: 'alice', amount: 50, createdAt: 2 }];
+    expect(simplifier.simplify(expenses, users.slice(0, 2), payments)).toEqual([]);
+  });
+
+  it('a partial settlement payment reduces the remaining debt', () => {
+    const expenses: Expense[] = [{
+      id: '1', description: 'Dinner', amount: 100,
+      paidBy: [{ userId: 'alice', amount: 100 }],
+      splitType: 'equal',
+      splits: [{ userId: 'alice', amount: 50 }, { userId: 'bob', amount: 50 }],
+      createdAt: 1,
+    }];
+    const payments: Payment[] = [{ id: 'p1', from: 'bob', to: 'alice', amount: 20, createdAt: 2 }];
+    expect(simplifier.simplify(expenses, users.slice(0, 2), payments)).toEqual([
+      { from: 'bob', to: 'alice', amount: 30 },
     ]);
   });
 });

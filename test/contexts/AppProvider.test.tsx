@@ -25,6 +25,7 @@ const sampleEvent: Event = {
   createdAt: 1000,
   participants: [{ id: 'u1', name: 'Alice' }],
   expenses: [],
+  payments: [],
 };
 
 describe('AppProvider (useApp)', () => {
@@ -160,6 +161,32 @@ describe('AppProvider (useApp)', () => {
     act(() => result.current.reset());
     expect(result.current.events).toHaveLength(1);
     expect(result.current.participants).toHaveLength(0);
+  });
+
+  it('addPayment settles a debt and removePayment restores it', () => {
+    const { result } = renderHook(() => useApp(), { wrapper });
+    act(() => result.current.createEvent('Trip'));
+    act(() => result.current.addParticipant('Alice'));
+    act(() => result.current.addParticipant('Bob'));
+    const [alice, bob] = result.current.participants;
+    act(() =>
+      result.current.addExpense({
+        description: 'Pizza',
+        amount: 30,
+        paidBy: [{ userId: alice.id, amount: 30 }],
+        splitType: 'equal',
+        participantIds: [alice.id, bob.id],
+      })
+    );
+    expect(result.current.debts).toEqual([{ from: bob.id, to: alice.id, amount: 15 }]);
+
+    act(() => result.current.addPayment(bob.id, alice.id, 15, 'cash'));
+    expect(result.current.payments).toHaveLength(1);
+    expect(result.current.debts).toEqual([]);
+
+    const paymentId = result.current.payments[0].id;
+    act(() => result.current.removePayment(paymentId));
+    expect(result.current.debts).toEqual([{ from: bob.id, to: alice.id, amount: 15 }]);
   });
 
   it('selectEvent and goBack switch the active event', () => {

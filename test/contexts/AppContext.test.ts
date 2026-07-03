@@ -13,6 +13,7 @@ const makeEvent = (overrides: Partial<Event> = {}): Event => ({
   createdAt: 1000,
   participants: [],
   expenses: [],
+  payments: [],
   ...overrides,
 });
 
@@ -251,6 +252,18 @@ describe('AppContext reducer', () => {
       expect(next.events[0].expenses).toHaveLength(1);
       expect(next.events[0].expenses[0].paidBy).toEqual([{ userId: 'u1', amount: 30 }]);
     });
+
+    it('drops recorded payments that involve the removed participant', () => {
+      const state: AppState = {
+        events: [makeEvent({
+          participants: [{ id: 'u1', name: 'Alice' }, { id: 'u2', name: 'Bob' }],
+          payments: [{ id: 'pay-1', from: 'u2', to: 'u1', amount: 10, createdAt: 3000 }],
+        })],
+        activeEventId: 'evt-1',
+      };
+      const next = reducer(state, { type: 'REMOVE_PARTICIPANT', payload: 'u2' });
+      expect(next.events[0].payments).toEqual([]);
+    });
   });
 
   describe('RESET', () => {
@@ -265,6 +278,32 @@ describe('AppContext reducer', () => {
       const next = reducer(state, { type: 'RESET' });
       expect(next.events[0].participants).toEqual([]);
       expect(next.events[0].expenses).toEqual([]);
+      expect(next.events[0].payments).toEqual([]);
+    });
+  });
+
+  describe('ADD_PAYMENT / REMOVE_PAYMENT', () => {
+    const payment = { id: 'pay-1', from: 'u2', to: 'u1', amount: 15, createdAt: 3000 };
+
+    it('records a payment on the active event', () => {
+      const state: AppState = { events: [makeEvent()], activeEventId: 'evt-1' };
+      const next = reducer(state, { type: 'ADD_PAYMENT', payload: payment });
+      expect(next.events[0].payments).toEqual([payment]);
+    });
+
+    it('removes a payment by id', () => {
+      const state: AppState = {
+        events: [makeEvent({ payments: [payment] })],
+        activeEventId: 'evt-1',
+      };
+      const next = reducer(state, { type: 'REMOVE_PAYMENT', payload: 'pay-1' });
+      expect(next.events[0].payments).toEqual([]);
+    });
+
+    it('does nothing when there is no active event', () => {
+      const state: AppState = { events: [makeEvent()], activeEventId: null };
+      const next = reducer(state, { type: 'ADD_PAYMENT', payload: payment });
+      expect(next.events[0].payments).toEqual([]);
     });
   });
 });

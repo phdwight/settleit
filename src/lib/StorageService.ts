@@ -18,6 +18,7 @@ export class StorageService implements IStorageService {
           createdAt: Date.now(),
           participants: parsed.participants,
           expenses: parsed.expenses ?? [],
+          payments: [],
         };
         return { events: [event], activeEventId: event.id };
       }

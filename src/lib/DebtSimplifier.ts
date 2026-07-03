@@ -1,8 +1,8 @@
-import type { Expense, Debt, User } from './types';
+import type { Expense, Debt, User, Payment } from './types';
 import { roundCents, MONEY_EPSILON } from './money';
 
 export class DebtSimplifier {
-  simplify(expenses: Expense[], participants: User[]): Debt[] {
+  simplify(expenses: Expense[], participants: User[], payments: Payment[] = []): Debt[] {
     if (!participants?.length || !expenses?.length) return [];
     // Compute net balance for each user (positive = owed money, negative = owes money)
     const balance: Record<string, number> = {};
@@ -21,6 +21,13 @@ export class DebtSimplifier {
       expense.splits.forEach(split => {
         balance[split.userId] = (balance[split.userId] ?? 0) - split.amount;
       });
+    });
+
+    // Apply recorded settlements: paying back reduces what the payer owes
+    // (balance up) and reduces what the payee is owed (balance down).
+    payments.forEach(payment => {
+      balance[payment.from] = (balance[payment.from] ?? 0) + payment.amount;
+      balance[payment.to] = (balance[payment.to] ?? 0) - payment.amount;
     });
 
     // Convert to arrays of creditors and debtors
