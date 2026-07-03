@@ -38,6 +38,27 @@ describe('DebtSimplifier', () => {
     ]);
   });
 
+  it('supports the legacy single-payer format (paidBy as a string)', () => {
+    const expenses = [{
+      id: '1',
+      description: 'Dinner',
+      amount: 100,
+      // Legacy shape: paidBy is a plain user id string, not an array.
+      paidBy: 'alice',
+      splitType: 'equal',
+      splits: [
+        { userId: 'alice', amount: 50 },
+        { userId: 'bob', amount: 50 },
+      ],
+      createdAt: 1,
+    }] as unknown as Expense[];
+
+    const debts = simplifier.simplify(expenses, users.slice(0, 2));
+    expect(debts).toEqual([
+      { from: 'bob', to: 'alice', amount: 50 },
+    ]);
+  });
+
   it('simplifies three-person debts', () => {
     const expenses: Expense[] = [{
       id: '1',

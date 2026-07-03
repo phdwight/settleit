@@ -8,7 +8,11 @@ import { NewEventForm } from '@/components/NewEventForm';
 import { useState } from 'react';
 import { DownloadIcon, UploadIcon, TrashIcon, ArrowLeftIcon, PlusIcon } from '@/components/icons';
 
-export function MoreMenu() {
+interface MoreMenuProps {
+  onEventCreated?: () => void;
+}
+
+export function MoreMenu({ onEventCreated }: MoreMenuProps) {
   const { exportEvent, importEvent, goBack } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
@@ -77,7 +81,7 @@ export function MoreMenu() {
       />
 
       <Sheet open={creatingEvent} title="New event" onClose={() => setCreatingEvent(false)}>
-        <NewEventForm onSubmitted={() => setCreatingEvent(false)} />
+        <NewEventForm onSubmitted={() => { setCreatingEvent(false); onEventCreated?.(); }} />
       </Sheet>
     </section>
   );

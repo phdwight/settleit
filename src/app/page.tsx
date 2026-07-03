@@ -31,7 +31,7 @@ export default function Home() {
           addLabel="New event"
         />
         <Sheet open={sheetOpen} title="New event" onClose={() => setSheetOpen(false)}>
-          <NewEventForm onSubmitted={() => setSheetOpen(false)} />
+          <NewEventForm onSubmitted={() => { setSheetOpen(false); setTab('people'); }} />
         </Sheet>
       </>
     );
@@ -52,6 +52,13 @@ export default function Home() {
     setEditingExpense(null);
   };
 
+  // After a successful add/edit, show the expenses list so the entry is
+  // visible even if the form was opened from another tab.
+  const handleExpenseSubmitted = () => {
+    closeSheet();
+    setTab('expenses');
+  };
+
   return (
     <>
       <div className="container mx-auto px-4 py-6 max-w-2xl page">
@@ -62,7 +69,7 @@ export default function Home() {
         {tab === 'summary' && <DebtSummary />}
         {tab === 'expenses' && <ExpenseList onEdit={openEdit} />}
         {tab === 'people' && <ParticipantManager />}
-        {tab === 'more' && <MoreMenu />}
+        {tab === 'more' && <MoreMenu onEventCreated={() => setTab('people')} />}
       </div>
 
       <BottomNav
@@ -77,7 +84,7 @@ export default function Home() {
         title={editingExpense ? 'Edit expense' : 'Add expense'}
         onClose={closeSheet}
       >
-        <ExpenseForm key={editingExpense?.id ?? 'new'} expense={editingExpense ?? undefined} onSubmitted={closeSheet} />
+        <ExpenseForm key={editingExpense?.id ?? 'new'} expense={editingExpense ?? undefined} onSubmitted={handleExpenseSubmitted} />
       </Sheet>
     </>
   );

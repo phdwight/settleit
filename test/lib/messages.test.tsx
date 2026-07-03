@@ -1,3 +1,4 @@
+import { render } from '@testing-library/react';
 import { messages } from '@/lib/messages';
 
 describe('messages', () => {
@@ -77,6 +78,27 @@ describe('messages', () => {
       expect(messages.summary.resetButton).toBe('Reset');
       expect(messages.summary.resetTitle).toBe('Reset this event?');
       expect(messages.summary.resetConfirm).toBe('Reset event');
+    });
+  });
+
+  describe('JSX message bodies', () => {
+    it('renders the participant remove intro with the name emphasized', () => {
+      const { getByText } = render(<>{messages.participants.removeIntro('Alice')}</>);
+      expect(getByText('Alice').tagName).toBe('STRONG');
+    });
+
+    it('renders the expense remove body with description and amount', () => {
+      const { container } = render(
+        <>{messages.expenses.removeBody('Pizza', '$30.00')}</>
+      );
+      expect(container.textContent).toContain('Pizza');
+      expect(container.textContent).toContain('$30.00');
+    });
+
+    it('renders the reset body with pluralized counts', () => {
+      const { container } = render(<>{messages.summary.resetBody(1, 3)}</>);
+      expect(container.textContent).toContain('1 participant will be removed');
+      expect(container.textContent).toContain('3 expenses');
     });
   });
 });
